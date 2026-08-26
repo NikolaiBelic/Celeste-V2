@@ -70,6 +70,7 @@ class EntityReference(BaseModel):
     name: str | None = None
     contextual_role: str | None = None
     surface_text: str | None = None
+    qualifiers: dict[str, Any] = Field(default_factory=dict)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
     @model_validator(mode="after")
