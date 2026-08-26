@@ -189,3 +189,71 @@ async def test_writer_resolves_entity_object():
         active[0].object_entity_id
         == "org_tiendanimal"
     )
+
+@pytest.mark.asyncio
+async def test_writer_falls_back_to_literal_for_unknown_object_entity():
+    repository = FakeMemoryRepository()
+
+    writer = MemoryWriter(
+        MemoryReconciler(repository)
+    )
+
+    laura_reference = EntityReference(
+        surface_text="Laura"
+    )
+
+    alicante_reference = EntityReference(
+        surface_text="Alicante"
+    )
+
+    understanding = TurnUnderstanding(
+        claims=[
+            Claim(
+                subject=laura_reference,
+                predicate="lives_in",
+                object=EntityClaimObject(
+                    entity=alicante_reference
+                ),
+            )
+        ]
+    )
+
+    laura = StoredEntity(
+        id="person_laura",
+        kind=EntityKind.PERSON,
+        canonical_name="Laura",
+    )
+
+    result = await writer.write(
+        understanding=understanding,
+        resolved_references=[
+            ResolvedMemoryReference(
+                reference=laura_reference,
+                resolution=ResolutionResult(
+                    entity=laura,
+                    confidence=0.98,
+                    strategy="canonical_name",
+                    ambiguous=False,
+                ),
+            ),
+            ResolvedMemoryReference(
+                reference=alicante_reference,
+                resolution=ResolutionResult(
+                    confidence=0.0,
+                    strategy="unresolved",
+                    ambiguous=False,
+                ),
+            ),
+        ],
+    )
+
+    assert len(result.reconciliations) == 1
+    assert result.skipped_claims == []
+
+    active = await repository.find_active_records(
+        subject_id="person_laura",
+        predicate="lives_in",
+    )
+
+    assert len(active) == 1
+    assert active[0].value == "Alicante"

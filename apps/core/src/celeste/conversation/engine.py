@@ -2,27 +2,29 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from celeste.cognition.grounding import (
+    GroundingIssue,
+    SemanticGrounder,
+)
 from celeste.cognition.models import (
     EntityReference,
     ReferenceKind,
     TurnUnderstanding,
 )
-
-from celeste.cognition.models import (
-    EntityReference,
-    ReferenceKind,
-)
-
-from celeste.cognition.grounding import (
-    GroundingIssue,
-    SemanticGrounder,
-)
-
 from celeste.cognition.understanding import UnderstandingEngine
 from celeste.conversation.context_resolver import ContextResolver
 from celeste.conversation.working_memory import WorkingMemory
 from celeste.memory.entities import ResolutionResult, StoredEntity
+from celeste.memory.entity_learner import (
+    EntityLearner,
+    EntityLearningResult,
+)
 from celeste.memory.entity_resolver import EntityResolver
+from celeste.memory.writer import (
+    MemoryWriteResult,
+    MemoryWriter,
+    ResolvedMemoryReference,
+)
 
 
 @dataclass
@@ -30,10 +32,12 @@ class ResolvedReference:
     reference: EntityReference
     resolution: ResolutionResult
 
+
 @dataclass
 class ConversationTurnResult:
     message: str
     understanding: TurnUnderstanding
+    memory_write: MemoryWriteResult | None = None
 
     resolved_references: list[ResolvedReference] = field(
         default_factory=list
@@ -42,6 +46,11 @@ class ConversationTurnResult:
     grounding_issues: list[GroundingIssue] = field(
         default_factory=list
     )
+
+    entity_learning: list[EntityLearningResult] = field(
+        default_factory=list
+    )
+
 
 class ConversationEngine:
     def __init__(
@@ -52,13 +61,16 @@ class ConversationEngine:
         working_memory: WorkingMemory,
         context_resolver: ContextResolver,
         grounder: SemanticGrounder | None = None,
+        memory_writer: MemoryWriter | None = None,
+        entity_learner: EntityLearner | None = None,
     ) -> None:
         self._understanding_engine = understanding_engine
         self._entity_resolver = entity_resolver
         self._working_memory = working_memory
         self._context_resolver = context_resolver
         self._grounder = grounder or SemanticGrounder()
-
+        self._memory_writer = memory_writer
+        self._entity_learner = entity_learner
 
     async def process(
         self,
@@ -78,13 +90,20 @@ class ConversationEngine:
 
         understanding = grounding.understanding
 
-        references = self._collect_references(understanding)
+        entity_learning: list[EntityLearningResult] = []
+
+        references = self._collect_references(
+            understanding
+        )
 
         resolved_references: list[ResolvedReference] = []
         mentioned_entities: dict[str, StoredEntity] = {}
 
         for reference in references:
-            if reference.reference_kind == ReferenceKind.CONTEXTUAL_PERSON:
+            if (
+                reference.reference_kind
+                == ReferenceKind.CONTEXTUAL_PERSON
+            ):
                 contextual = (
                     self._context_resolver.resolve_recent_person()
                 )
@@ -116,9 +135,58 @@ class ConversationEngine:
             )
 
             if resolution.entity is not None:
-                mentioned_entities[resolution.entity.id] = (
-                    resolution.entity
+                mentioned_entities[
+                    resolution.entity.id
+                ] = resolution.entity
+
+        if self._entity_learner is not None:
+            for mention in understanding.entities:
+                already_resolved = next(
+                    (
+                        item
+                        for item in resolved_references
+                        if item.reference is mention.reference
+                        and item.resolution.entity is not None
+                    ),
+                    None,
                 )
+
+                if already_resolved is not None:
+                    continue
+
+                learning = await self._entity_learner.learn(
+                    reference=mention.reference,
+                    type_hint=mention.type_hint,
+                )
+
+                entity_learning.append(
+                    learning
+                )
+
+                if learning.entity is None:
+                    continue
+
+                resolution = ResolutionResult(
+                    entity=learning.entity,
+                    confidence=mention.confidence,
+                    strategy=(
+                        "learned_entity"
+                        if learning.created
+                        else "existing_entity"
+                    ),
+                    ambiguous=False,
+                )
+
+                resolved_references.append(
+                    ResolvedReference(
+                        reference=mention.reference,
+                        resolution=resolution,
+                    )
+                )
+
+                mentioned_entities[
+                    learning.entity.id
+                ] = learning.entity
 
         self._working_memory.add_turn(
             role="user",
@@ -126,13 +194,31 @@ class ConversationEngine:
         )
 
         for entity in mentioned_entities.values():
-            self._working_memory.mention_entity(entity)
+            self._working_memory.mention_entity(
+                entity
+            )
+
+        memory_write: MemoryWriteResult | None = None
+
+        if self._memory_writer is not None:
+            memory_write = await self._memory_writer.write(
+                understanding=understanding,
+                resolved_references=[
+                    ResolvedMemoryReference(
+                        reference=item.reference,
+                        resolution=item.resolution,
+                    )
+                    for item in resolved_references
+                ],
+            )
 
         return ConversationTurnResult(
             message=message,
             understanding=understanding,
             resolved_references=resolved_references,
             grounding_issues=grounding.issues,
+            memory_write=memory_write,
+            entity_learning=entity_learning,
         )
 
     @staticmethod
@@ -147,14 +233,19 @@ class ConversationEngine:
         )
 
         references.extend(
-            understanding.references
+            resolution.reference
+            for resolution in understanding.references
         )
 
         for claim in understanding.claims:
-            references.append(claim.subject)
+            references.append(
+                claim.subject
+            )
 
             if claim.object.entity is not None:
-                references.append(claim.object.entity)
+                references.append(
+                    claim.object.entity
+                )
 
         for event in understanding.events:
             references.extend(
@@ -167,20 +258,25 @@ class ConversationEngine:
                 correction.previous.subject
             )
 
-            if correction.previous.object_entity is not None:
+            if (
+                correction.previous.object_entity
+                is not None
+            ):
                 references.append(
                     correction.previous.object_entity
                 )
 
-            references.append(
-                correction.replacement.subject
-            )
-
-            if correction.replacement.object_entity is not None:
+            if correction.replacement is not None:
                 references.append(
-                    correction.replacement.object_entity
+                    correction.replacement.subject
                 )
 
-        return references
+                if (
+                    correction.replacement.object_entity
+                    is not None
+                ):
+                    references.append(
+                        correction.replacement.object_entity
+                    )
 
-    
+        return references

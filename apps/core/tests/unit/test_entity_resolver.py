@@ -151,3 +151,16 @@ async def test_unknown_entity_is_not_invented(
 
     assert result.entity is None
     assert result.strategy == "unresolved"
+
+@pytest.mark.asyncio
+async def test_resolves_explicit_surface_text(
+    resolver: EntityResolver,
+):
+    result = await resolver.resolve(
+        EntityReference(
+            surface_text="Lau",
+        )
+    )
+
+    assert result.entity is not None
+    assert result.entity.id == "person_laura_partner"

@@ -17,6 +17,8 @@ from celeste.memory.entities import EntityKind, StoredEntity
 from celeste.memory.fake_entity_repository import FakeEntityRepository
 from celeste.memory.entity_resolver import EntityResolver
 from celeste.providers.fake import FakeLLMProvider
+from celeste.cognition.models import EntityType
+from celeste.memory.entity_learner import EntityLearner
 
 
 def build_engine(
@@ -287,3 +289,62 @@ async def test_contextual_pronoun_stays_ambiguous_with_two_people():
     ]
 
     assert ambiguous
+
+@pytest.mark.asyncio
+async def test_engine_learns_unknown_explicit_entity():
+    repository = FakeEntityRepository(
+        entities=[],
+        relations=[],
+    )
+
+    working_memory = WorkingMemory()
+
+    alicante_reference = EntityReference(
+        name="Alicante",
+    )
+
+    understanding = TurnUnderstanding(
+        entities=[
+            EntityMention(
+                surface_text="Alicante",
+                type_hint=EntityType.PLACE,
+                reference=alicante_reference,
+            )
+        ]
+    )
+
+    engine = ConversationEngine(
+        understanding_engine=UnderstandingEngine(
+            FakeLLMProvider(understanding)
+        ),
+        entity_resolver=EntityResolver(
+            repository,
+            user_entity_id="person_user",
+        ),
+        working_memory=working_memory,
+        context_resolver=ContextResolver(
+            working_memory
+        ),
+        entity_learner=EntityLearner(
+            repository
+        ),
+    )
+
+    result = await engine.process(
+        "Alicante es una ciudad preciosa."
+    )
+
+    assert len(result.entity_learning) == 1
+
+    learning = result.entity_learning[0]
+
+    assert learning.created is True
+    assert learning.entity is not None
+    assert learning.entity.kind == EntityKind.PLACE
+    assert learning.entity.canonical_name == "Alicante"
+
+    stored = await repository.find_by_name(
+        "Alicante"
+    )
+
+    assert len(stored) == 1

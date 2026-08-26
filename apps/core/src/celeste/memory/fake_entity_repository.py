@@ -18,6 +18,13 @@ class FakeEntityRepository(EntityRepository):
 
         self.relations = relations or []
 
+    async def add(
+        self,
+        entity: StoredEntity,
+    ) -> StoredEntity:
+        self.entities[entity.id] = entity
+        return entity
+
     async def get_by_id(
         self,
         entity_id: str,

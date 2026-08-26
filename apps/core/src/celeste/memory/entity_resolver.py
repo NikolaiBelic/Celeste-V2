@@ -43,14 +43,22 @@ class EntityResolver:
 
         name_candidates: list[StoredEntity] = []
 
-        if reference.name:
+        lookup_name = reference.name
+
+        if (
+            lookup_name is None
+            and reference.reference_kind.value == "explicit_entity"
+        ):
+            lookup_name = reference.surface_text
+
+        if lookup_name:
             name_candidates = await self._repository.find_by_name(
-                reference.name
+                lookup_name
             )
 
             if not name_candidates:
                 name_candidates = await self._repository.find_by_alias(
-                    reference.name
+                    lookup_name
                 )
 
         if reference.contextual_role:

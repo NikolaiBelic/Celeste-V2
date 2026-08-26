@@ -60,14 +60,28 @@ class MemoryWriter:
             value: object | None = None
 
             if claim.object.entity is not None:
+                object_reference = claim.object.entity
+
                 object_entity_id = self._resolve_entity_id(
-                    claim.object.entity,
+                    object_reference,
                     resolved_references,
                 )
 
                 if object_entity_id is None:
-                    result.skipped_claims.append(claim)
-                    continue
+                    literal_fallback = (
+                        object_reference.name
+                        or object_reference.surface_text
+                    )
+
+                    if (
+                        literal_fallback
+                        and object_reference.reference_kind.value
+                        == "explicit_entity"
+                    ):
+                        value = literal_fallback
+                    else:
+                        result.skipped_claims.append(claim)
+                        continue
 
             else:
                 value = claim.object.value

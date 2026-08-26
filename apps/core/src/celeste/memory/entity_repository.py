@@ -36,3 +36,10 @@ class EntityRepository(ABC):
         active_only: bool = True,
     ) -> list[StoredEntity]:
         raise NotImplementedError
+
+    @abstractmethod
+    async def add(
+        self,
+        entity: StoredEntity,
+    ) -> StoredEntity:
+        raise NotImplementedError
