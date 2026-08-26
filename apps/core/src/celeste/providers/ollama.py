@@ -65,18 +65,16 @@ class OllamaProvider(LLMProvider):
 
         except ValidationError as exc:
             repair_prompt = (
-                "Your previous structured output was invalid.\n\n"
+                "Your previous structured output did not satisfy the "
+                "required response model.\n\n"
                 "Validation errors:\n"
                 f"{exc}\n\n"
-                "Pay special attention to semantic validation rules that may "
-                "not be fully represented by the JSON schema.\n"
-                "If a Claim contains an object, it must match one of the "
-                "valid ClaimObject variants from the schema.\n"
-                "Do not invent incomplete objects or repeat invalid null fields.\n"
-                "Do not repeat the invalid structure.\n\n"
                 "Correct the structured output while preserving the "
                 "meaning of the original user message.\n"
-                "Return only a valid object matching the required schema."
+                "Respect all schema constraints and semantic validation "
+                "rules from the required response model.\n"
+                "Do not invent information merely to satisfy validation.\n"
+                "Return only the corrected structured object."
             )
 
             repair_response = await self._client.chat(
