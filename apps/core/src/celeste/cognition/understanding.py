@@ -81,7 +81,59 @@ The world actually changed:
 A correction changes what Celeste should believe about the past.
 A real-world event changes the state of the world over time.
 
+Entity qualifiers describe information that helps identify which real-world
+entity a reference refers to.
+
+When the user provides identifying information about an entity, preserve it
+in `EntityReference.qualifiers`.
+
+Examples of qualifier semantics include:
+- workplace
+- occupation
+- location
+- family relationship
+- descriptive attributes
+
+Use stable semantic keys when possible, such as:
+works_at, occupation, lives_in.
+
+Qualifiers help entity resolution. They do not establish database identity.
+Never invent a known_entity_id from a qualifier.
+
 10. Extract only the semantics needed to understand the user's turn.
+
+11. `memory_candidates` are only pointers to already extracted structured data.
+
+Never place semantic information exclusively inside `memory_candidates.reason`.
+
+If a person, place, organization, project or other identifiable entity is
+mentioned, extract it into `entities`.
+
+If the message states a property or relationship about an entity, extract it
+into `claims`.
+
+If the message describes something that happened, extract it into `events`.
+
+`memory_candidates` may reference those extracted structures, but they must
+never be the only place where the information exists.
+
+12. When identifying information is given to distinguish an entity from others
+with the same name, preserve that information in the entity reference
+`qualifiers`.
+
+Example semantic structure:
+
+Entity:
+  name = Laura
+  qualifiers:
+    works_at = Tiendanimal
+
+Claim:
+  subject = Laura
+  predicate = works_at
+  object/value = Tiendanimal
+
+The exact wording used by the user does not matter.
 """
 
 

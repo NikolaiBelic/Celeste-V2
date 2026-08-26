@@ -92,8 +92,14 @@ class EntityReference(BaseModel):
 class EntityMention(BaseModel):
     surface_text: str
     type_hint: EntityType = EntityType.UNKNOWN
+
+    reference: EntityReference = Field(
+        description=(
+            "Structured reference to the entity mentioned in the text."
+        )
+    )
+
     resolved: bool = False
-    reference: EntityReference | None = None
     attributes: dict[str, Any] = Field(default_factory=dict)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
