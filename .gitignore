@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# IDE / editors
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node / React
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Tauri / Rust
+target/
+
+# PostgreSQL / local data
+postgres-data/
+pgdata/
+data/postgres/
+
+# Logs / temp
+*.log
+logs/
+tmp/
+temp/
+
+# Celeste local runtime data
+runtime/
+local-data/

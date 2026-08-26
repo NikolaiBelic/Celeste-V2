@@ -1,0 +1,25 @@
+[project]
+name = "celeste-core"
+version = "0.1.0"
+description = "Cognitive core for Celeste V2"
+readme = "README.md"
+authors = [
+    { name = "NikolaiBelic" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic>=2.13.4",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "celeste"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
