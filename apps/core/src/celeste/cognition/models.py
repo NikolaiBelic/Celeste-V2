@@ -165,6 +165,31 @@ class EventCandidate(BaseModel):
         le=1.0,
     )
 
+class ClaimObject(BaseModel):
+    entity: EntityReference | None = None
+    value: Any | None = None
+
+    @model_validator(mode="after")
+    def ensure_object_exists(self) -> ClaimObject:
+        if self.entity is None and self.value is None:
+            raise ValueError(
+                "ClaimObject requires either entity or value"
+            )
+
+        return self
+
+class Claim(BaseModel):
+    subject: EntityReference
+    predicate: str
+    object: ClaimObject
+
+    certainty: Certainty = Certainty.ASSERTED
+
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+    )
 
 class ClaimDescriptor(BaseModel):
     subject: EntityReference
@@ -176,8 +201,21 @@ class ClaimDescriptor(BaseModel):
         )
     )
 
-    object_entity: EntityReference | None = None
-    value: Any | None = None
+    object_entity: EntityReference | None = Field(
+        default=None,
+        description=(
+            "Entity that is the object of the claim. "
+            "Use this when the claim points to another identifiable entity."
+        ),
+    )
+
+    value: Any | None = Field(
+        default=None,
+        description=(
+            "Literal value of the claim when the object is not represented "
+            "as an entity. A claim must provide either object_entity or value."
+        ),
+    )
 
 
 class CorrectionCandidate(BaseModel):

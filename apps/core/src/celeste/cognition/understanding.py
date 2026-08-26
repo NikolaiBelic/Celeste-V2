@@ -134,6 +134,41 @@ Claim:
   object/value = Tiendanimal
 
 The exact wording used by the user does not matter.
+
+13. Every Claim MUST contain a complete object.
+
+A Claim is invalid if both `object_entity` and `value` are null.
+
+For every Claim:
+- use `object_entity` when the object is an identifiable entity;
+- otherwise use `value` for a literal value.
+
+Never emit a Claim with:
+  object_entity = null
+  value = null
+
+If the message does not provide enough information to construct a complete
+Claim, do not emit that Claim.
+
+Example:
+
+"Laura works at Tiendanimal"
+
+Valid:
+  subject = Laura
+  predicate = works_at
+  object_entity = Tiendanimal
+
+Also valid when represented as a literal:
+  subject = Laura
+  predicate = works_at
+  value = "Tiendanimal"
+
+Invalid:
+  subject = Laura
+  predicate = works_at
+  object_entity = null
+  value = null
 """
 
 

@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from celeste.cognition.models import (
     Certainty,
     Claim,
+    ClaimObject,
     EntityReference,
     EntityType,
     EventCandidate,
@@ -24,22 +25,24 @@ def test_claim_requires_object_or_value():
         Claim(
             subject=EntityReference(name="Laura"),
             predicate="lives_in",
+            object=ClaimObject(),
             certainty=Certainty.ASSERTED,
         )
-
 
 def test_claim_with_entity_object_is_valid():
     claim = Claim(
         subject=EntityReference(name="Laura"),
         predicate="lives_in",
-        object_entity=EntityReference(name="Alicante"),
+        object=ClaimObject(
+            entity=EntityReference(name="Alicante"),
+        ),
         certainty=Certainty.ASSERTED,
         confidence=0.98,
     )
 
     assert claim.subject.name == "Laura"
-    assert claim.object_entity is not None
-    assert claim.object_entity.name == "Alicante"
+    assert claim.object.entity is not None
+    assert claim.object.entity.name == "Alicante"
 
 
 def test_relationship_end_can_be_expressed_without_database_ids():
