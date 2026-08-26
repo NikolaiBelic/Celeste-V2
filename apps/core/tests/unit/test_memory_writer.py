@@ -257,3 +257,92 @@ async def test_writer_falls_back_to_literal_for_unknown_object_entity():
 
     assert len(active) == 1
     assert active[0].value == "Alicante"
+
+@pytest.mark.asyncio
+async def test_writer_uses_later_resolved_equivalent_reference():
+    repository = FakeMemoryRepository()
+
+    writer = MemoryWriter(
+        MemoryReconciler(repository)
+    )
+
+    claim_subject = EntityReference(
+        surface_text="Laura"
+    )
+
+    claim_object = EntityReference(
+        surface_text="Alicante"
+    )
+
+    learned_reference = EntityReference(
+        name="Alicante"
+    )
+
+    laura_reference = EntityReference(
+        name="Laura"
+    )
+
+    understanding = TurnUnderstanding(
+        claims=[
+            Claim(
+                subject=claim_subject,
+                predicate="lives_in",
+                object=EntityClaimObject(
+                    entity=claim_object
+                ),
+            )
+        ]
+    )
+
+    laura = StoredEntity(
+        id="person_laura",
+        kind=EntityKind.PERSON,
+        canonical_name="Laura",
+    )
+
+    alicante = StoredEntity(
+        id="place_alicante",
+        kind=EntityKind.PLACE,
+        canonical_name="Alicante",
+    )
+
+    await writer.write(
+        understanding=understanding,
+        resolved_references=[
+            ResolvedMemoryReference(
+                reference=laura_reference,
+                resolution=ResolutionResult(
+                    entity=laura,
+                    confidence=1.0,
+                    strategy="canonical_name",
+                    ambiguous=False,
+                ),
+            ),
+            ResolvedMemoryReference(
+                reference=claim_object,
+                resolution=ResolutionResult(
+                    confidence=0.0,
+                    strategy="unresolved",
+                    ambiguous=False,
+                ),
+            ),
+            ResolvedMemoryReference(
+                reference=learned_reference,
+                resolution=ResolutionResult(
+                    entity=alicante,
+                    confidence=0.95,
+                    strategy="learned_entity",
+                    ambiguous=False,
+                ),
+            ),
+        ],
+    )
+
+    active = await repository.find_active_records(
+        subject_id="person_laura",
+        predicate="lives_in",
+    )
+
+    assert len(active) == 1
+    assert active[0].object_entity_id == "place_alicante"
+    assert active[0].value is None

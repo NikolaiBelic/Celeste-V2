@@ -1,0 +1,17 @@
+ORDEN REAL DE CONSTRUCCIÓN — CELESTE V2
+
+1. Interpretación.
+2. Contexto conversacional.
+3. Temporalidad.
+4. Modelo de conocimiento/mundo.
+5. Recall.
+6. Hipótesis e incertidumbre.
+7. Deliberación.
+8. Curiosidad/open loops.
+9. Decisiones de memoria.
+10. Validación y reconciliación.
+11. Conversation Planner.
+12. Personalidad/respuesta.
+13. Reflexión/consolidación.
+14. Cognitive Router.
+15. Persistencia PostgreSQL cuando sepamos exactamente qué necesitamos persistir.

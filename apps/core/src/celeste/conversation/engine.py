@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from celeste.cognition.entity_type_resolver import EntityTypeResolver
 from celeste.cognition.grounding import (
     GroundingIssue,
     SemanticGrounder,
@@ -63,6 +64,7 @@ class ConversationEngine:
         grounder: SemanticGrounder | None = None,
         memory_writer: MemoryWriter | None = None,
         entity_learner: EntityLearner | None = None,
+        entity_type_resolver: EntityTypeResolver | None = None,
     ) -> None:
         self._understanding_engine = understanding_engine
         self._entity_resolver = entity_resolver
@@ -71,6 +73,9 @@ class ConversationEngine:
         self._grounder = grounder or SemanticGrounder()
         self._memory_writer = memory_writer
         self._entity_learner = entity_learner
+        self._entity_type_resolver = (
+            entity_type_resolver or EntityTypeResolver()
+        )
 
     async def process(
         self,
@@ -121,7 +126,6 @@ class ConversationEngine:
                         strategy=contextual.strategy,
                         ambiguous=contextual.ambiguous,
                     )
-
             else:
                 resolution = await self._entity_resolver.resolve(
                     reference
@@ -139,6 +143,13 @@ class ConversationEngine:
                     resolution.entity.id
                 ] = resolution.entity
 
+        type_resolutions = {
+            id(result.mention.reference): result
+            for result in self._entity_type_resolver.resolve(
+                understanding
+            )
+        }
+
         if self._entity_learner is not None:
             for mention in understanding.entities:
                 already_resolved = next(
@@ -154,9 +165,19 @@ class ConversationEngine:
                 if already_resolved is not None:
                     continue
 
+                type_resolution = type_resolutions.get(
+                    id(mention.reference)
+                )
+
+                inferred_type = (
+                    type_resolution.entity_type
+                    if type_resolution is not None
+                    else mention.type_hint
+                )
+
                 learning = await self._entity_learner.learn(
                     reference=mention.reference,
-                    type_hint=mention.type_hint,
+                    type_hint=inferred_type,
                 )
 
                 entity_learning.append(
@@ -168,7 +189,11 @@ class ConversationEngine:
 
                 resolution = ResolutionResult(
                     entity=learning.entity,
-                    confidence=mention.confidence,
+                    confidence=(
+                        type_resolution.confidence
+                        if type_resolution is not None
+                        else mention.confidence
+                    ),
                     strategy=(
                         "learned_entity"
                         if learning.created
@@ -258,10 +283,7 @@ class ConversationEngine:
                 correction.previous.subject
             )
 
-            if (
-                correction.previous.object_entity
-                is not None
-            ):
+            if correction.previous.object_entity is not None:
                 references.append(
                     correction.previous.object_entity
                 )
@@ -271,10 +293,7 @@ class ConversationEngine:
                     correction.replacement.subject
                 )
 
-                if (
-                    correction.replacement.object_entity
-                    is not None
-                ):
+                if correction.replacement.object_entity is not None:
                     references.append(
                         correction.replacement.object_entity
                     )

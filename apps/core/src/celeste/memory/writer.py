@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from celeste.cognition.reference_matching import references_match
 
 from celeste.cognition.models import (
     Claim,
@@ -103,18 +104,17 @@ class MemoryWriter:
 
         return result
 
-    @staticmethod
     def _resolve_entity_id(
-        reference: object,
-        resolved_references: list[ResolvedMemoryReference],
+        self,
+        reference,
+        resolved_references,
     ) -> str | None:
         for resolved in resolved_references:
-            if resolved.reference is not reference:
-                continue
-
-            if resolved.resolution.entity is None:
-                return None
-
-            return resolved.resolution.entity.id
+            if references_match(
+                resolved.reference,
+                reference,
+            ):
+                if resolved.resolution.entity is not None:
+                    return resolved.resolution.entity.id
 
         return None
