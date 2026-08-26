@@ -130,16 +130,28 @@ class Claim(BaseModel):
 
 class EventParticipant(BaseModel):
     entity: EntityReference
-    role: str | None = None
+    role: str
 
 
 class EventCandidate(BaseModel):
-    event_type: str
-    participants: list[EventParticipant] = Field(default_factory=list)
+    event_type: str = Field(
+    description=(
+        "A real-world event or state transition. "
+        "Do not use this field for corrections to information."
+        )
+    )
+    participants: list[EventParticipant] = Field(min_length=1)
+
     temporal: TemporalExpression | None = None
+
+    state_domain: str | None = None
+    state_change: str | None = None
+
     attributes: dict[str, Any] = Field(default_factory=dict)
+
     certainty: Certainty
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+
     importance_hint: float | None = Field(
         default=None,
         ge=0.0,
@@ -149,20 +161,44 @@ class EventCandidate(BaseModel):
 
 class ClaimDescriptor(BaseModel):
     subject: EntityReference
-    predicate: str
+
+    predicate: str = Field(
+        description=(
+            "Semantic property or relationship being described, "
+            "for example lives_in, works_at or owns."
+        )
+    )
+
     object_entity: EntityReference | None = None
     value: Any | None = None
 
 
 class CorrectionCandidate(BaseModel):
-    previous: ClaimDescriptor
-    replacement: ClaimDescriptor | None = None
+    previous: ClaimDescriptor = Field(
+        description=(
+            "The previous information that the user explicitly says "
+            "was incorrect."
+        )
+    )
+
+    replacement: ClaimDescriptor | None = Field(
+        default=None,
+        description=(
+            "The corrected information, if the user provides it."
+        ),
+    )
+
     correction_type: Literal[
         "replace",
         "retract",
         "clarify",
     ]
-    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+    )
 
 
 class ReferenceResolution(BaseModel):
@@ -176,6 +212,7 @@ class ReferenceResolution(BaseModel):
         "semantic_context",
         "unresolved",
     ]
+
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
@@ -206,7 +243,13 @@ class TurnUnderstanding(BaseModel):
     references: list[ReferenceResolution] = Field(default_factory=list)
     claims: list[Claim] = Field(default_factory=list)
     events: list[EventCandidate] = Field(default_factory=list)
-    corrections: list[CorrectionCandidate] = Field(default_factory=list)
+    corrections: list[CorrectionCandidate] = Field(
+    default_factory=list,
+    description=(
+        "Explicit corrections to previously communicated information. "
+        "Corrections are NOT real-world events."
+        ),
+    )
     memory_candidates: list[MemoryCandidate] = Field(default_factory=list)
     uncertainties: list[Uncertainty] = Field(default_factory=list)
 

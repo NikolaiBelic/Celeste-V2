@@ -21,12 +21,14 @@ async def test_understanding_engine_returns_structured_result():
                     EventParticipant(
                         entity=EntityReference(
                             contextual_role="user",
-                        )
+                        ),
+                        role="subject",
                     ),
                     EventParticipant(
                         entity=EntityReference(
                             contextual_role="current_romantic_partner",
-                        )
+                        ),
+                        role="partner",
                     ),
                 ],
                 certainty=Certainty.ASSERTED,

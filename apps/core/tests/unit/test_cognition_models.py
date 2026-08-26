@@ -49,14 +49,16 @@ def test_relationship_end_can_be_expressed_without_database_ids():
             EventParticipant(
                 entity=EntityReference(
                     contextual_role="user",
-                )
+                ),
+                role="subject",
             ),
             EventParticipant(
                 entity=EntityReference(
                     contextual_role="current_romantic_partner",
                     surface_text="mi novia",
                     confidence=0.97,
-                )
+                ),
+                role="partner",
             ),
         ],
         certainty=Certainty.ASSERTED,
