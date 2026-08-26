@@ -4,8 +4,20 @@ from dataclasses import dataclass, field
 
 from celeste.cognition.models import (
     EntityReference,
+    ReferenceKind,
     TurnUnderstanding,
 )
+
+from celeste.cognition.models import (
+    EntityReference,
+    ReferenceKind,
+)
+
+from celeste.cognition.grounding import (
+    GroundingIssue,
+    SemanticGrounder,
+)
+
 from celeste.cognition.understanding import UnderstandingEngine
 from celeste.conversation.context_resolver import ContextResolver
 from celeste.conversation.working_memory import WorkingMemory
@@ -18,7 +30,6 @@ class ResolvedReference:
     reference: EntityReference
     resolution: ResolutionResult
 
-
 @dataclass
 class ConversationTurnResult:
     message: str
@@ -28,6 +39,9 @@ class ConversationTurnResult:
         default_factory=list
     )
 
+    grounding_issues: list[GroundingIssue] = field(
+        default_factory=list
+    )
 
 class ConversationEngine:
     def __init__(
@@ -37,32 +51,14 @@ class ConversationEngine:
         entity_resolver: EntityResolver,
         working_memory: WorkingMemory,
         context_resolver: ContextResolver,
+        grounder: SemanticGrounder | None = None,
     ) -> None:
         self._understanding_engine = understanding_engine
         self._entity_resolver = entity_resolver
         self._working_memory = working_memory
         self._context_resolver = context_resolver
+        self._grounder = grounder or SemanticGrounder()
 
-    def _is_contextual_person_reference(
-        self,
-        reference: EntityReference,
-    ) -> bool:
-        candidates = {
-            "ella",
-            "él",
-            "el",
-            "she",
-            "he",
-            "her",
-            "him",
-        }
-
-        values = {
-            (reference.name or "").casefold(),
-            (reference.surface_text or "").casefold(),
-        }
-
-        return bool(values & candidates)
 
     async def process(
         self,
@@ -75,13 +71,20 @@ class ConversationEngine:
             message
         )
 
+        grounding = self._grounder.ground(
+            message=message,
+            understanding=understanding,
+        )
+
+        understanding = grounding.understanding
+
         references = self._collect_references(understanding)
 
         resolved_references: list[ResolvedReference] = []
         mentioned_entities: dict[str, StoredEntity] = {}
 
         for reference in references:
-            if self._is_contextual_person_reference(reference):
+            if reference.reference_kind == ReferenceKind.CONTEXTUAL_PERSON:
                 contextual = (
                     self._context_resolver.resolve_recent_person()
                 )
@@ -129,6 +132,7 @@ class ConversationEngine:
             message=message,
             understanding=understanding,
             resolved_references=resolved_references,
+            grounding_issues=grounding.issues,
         )
 
     @staticmethod

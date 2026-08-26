@@ -64,30 +64,75 @@ class PersistenceHint(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
 
+class ReferenceKind(str, Enum):
+    EXPLICIT_ENTITY = "explicit_entity"
+    CONTEXTUAL_PERSON = "contextual_person"
+    CONTEXTUAL_OBJECT = "contextual_object"
+    CONTEXTUAL_TOPIC = "contextual_topic"
+    UNRESOLVED = "unresolved"
+
 
 class EntityReference(BaseModel):
-    known_entity_id: UUID | None = None
+    known_entity_id: str | None = None
     name: str | None = None
     contextual_role: str | None = None
-    surface_text: str | None = None
+    surface_text: str | None = Field(
+        default=None,
+        description=(
+            "Exact referring expression from the user's message when the "
+            "entity is not identified by an explicit canonical name. "
+            "For contextual references, preserve expressions such as "
+            "'ella', 'él', 'esa persona', 'eso' or equivalent wording "
+            "here. A contextual reference must not discard the expression "
+            "that appeared in the message."
+        ),
+    )
     qualifiers: dict[str, Any] = Field(default_factory=dict)
-    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+
+    reference_kind: ReferenceKind = Field(
+        default=ReferenceKind.EXPLICIT_ENTITY,
+        description=(
+            "How this reference should be interpreted. "
+            "Use explicit_entity for explicitly named entities. "
+            "Use contextual_person when a person is referred to indirectly "
+            "through conversation context, for example 'ella' or 'él'. "
+            "Contextual references should preserve the original expression "
+            "in surface_text."
+        ),
+    )
+
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+    )
 
     @model_validator(mode="after")
     def ensure_reference_exists(self) -> EntityReference:
-        if not any(
+        has_identifier = any(
             (
                 self.known_entity_id,
                 self.name,
                 self.contextual_role,
                 self.surface_text,
             )
-        ):
-            raise ValueError(
-                "EntityReference requires at least one identifying reference"
-            )
-        return self
+        )
 
+        if has_identifier:
+            return self
+
+        if self.reference_kind in {
+            ReferenceKind.CONTEXTUAL_PERSON,
+            ReferenceKind.CONTEXTUAL_OBJECT,
+            ReferenceKind.CONTEXTUAL_TOPIC,
+            ReferenceKind.UNRESOLVED,
+        }:
+            return self
+
+        raise ValueError(
+            "Explicit EntityReference requires at least one "
+            "identifying reference"
+        )
 
 class EntityMention(BaseModel):
     surface_text: str
@@ -111,29 +156,6 @@ class TemporalExpression(BaseModel):
     relative_value: str | None = None
     anchor_description: str | None = None
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
-
-
-class Claim(BaseModel):
-    subject: EntityReference
-    predicate: str
-
-    object_entity: EntityReference | None = None
-    value: Any | None = None
-
-    polarity: Literal["positive", "negative"] = "positive"
-    certainty: Certainty
-    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
-
-    temporal: TemporalExpression | None = None
-
-    @model_validator(mode="after")
-    def ensure_object_or_value(self) -> Claim:
-        if self.object_entity is None and self.value is None:
-            raise ValueError(
-                "Claim requires either object_entity or value"
-            )
-        return self
-
 
 class EventParticipant(BaseModel):
     entity: EntityReference
@@ -165,18 +187,18 @@ class EventCandidate(BaseModel):
         le=1.0,
     )
 
-class ClaimObject(BaseModel):
-    entity: EntityReference | None = None
-    value: Any | None = None
+class EntityClaimObject(BaseModel):
+    entity: EntityReference
+    value: None = None
 
-    @model_validator(mode="after")
-    def ensure_object_exists(self) -> ClaimObject:
-        if self.entity is None and self.value is None:
-            raise ValueError(
-                "ClaimObject requires either entity or value"
-            )
 
-        return self
+class ValueClaimObject(BaseModel):
+    entity: None = None
+    value: str | int | float | bool | dict[str, Any] | list[Any]
+
+
+ClaimObject = EntityClaimObject | ValueClaimObject
+
 
 class Claim(BaseModel):
     subject: EntityReference

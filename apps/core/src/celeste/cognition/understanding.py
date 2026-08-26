@@ -169,6 +169,62 @@ Invalid:
   predicate = works_at
   object_entity = null
   value = null
+
+REFERENCE CLASSIFICATION
+
+Every entity reference must be classified semantically using reference_kind.
+
+Use:
+
+- explicit_entity:
+  The message explicitly identifies the entity by name, identifier,
+  descriptive qualifier, or stable role.
+  Examples: "Laura", "Laura la de Tiendanimal", "mi hermano".
+
+- contextual_person:
+  The expression refers to a person whose identity depends on conversational
+  context rather than being explicitly identified in the current message.
+  Examples include pronouns and expressions such as "ella", "él",
+  "esa persona", "la otra", when their identity depends on prior context.
+
+- contextual_object:
+  The expression refers to a non-person object or thing whose identity
+  depends on conversational context.
+
+- contextual_topic:
+  The expression refers to a previously discussed subject, situation,
+  event, or topic.
+
+- unresolved:
+  Use when the message contains a reference but there is not enough
+  information to determine what kind of entity or contextual reference it is.
+
+IMPORTANT:
+Classify by semantic function, not by matching specific words.
+A word or expression can have different meanings depending on context.
+
+Do not invent known_entity_id values.
+
+GROUNDING RULES
+
+Never invent a referring expression that does not occur in the user's
+message or supplied context.
+
+When surface_text is provided, it must preserve wording that actually
+appears in the user's message.
+
+First-person references to the speaker must resolve semantically to the user.
+
+For example, first-person expressions equivalent to:
+"I", "me", "my", "yo", "me", "mi"
+
+when they refer to the speaker should use:
+
+contextual_role = "user"
+
+Do not reinterpret a first-person reference as a romantic partner,
+family member, friend, or any other relationship unless the message or
+context explicitly supports that relationship.
 """
 
 

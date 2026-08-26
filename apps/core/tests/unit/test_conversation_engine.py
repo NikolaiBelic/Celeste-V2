@@ -6,6 +6,7 @@ from celeste.cognition.models import (
     EntityReference,
     EventCandidate,
     EventParticipant,
+    ReferenceKind,
     TurnUnderstanding,
 )
 from celeste.cognition.understanding import UnderstandingEngine
@@ -181,6 +182,7 @@ async def test_contextual_pronoun_resolves_to_recent_person():
                     EventParticipant(
                         entity=EntityReference(
                             name="ella",
+                            reference_kind=ReferenceKind.CONTEXTUAL_PERSON,
                         ),
                         role="sender",
                     )
@@ -250,6 +252,7 @@ async def test_contextual_pronoun_stays_ambiguous_with_two_people():
                     EventParticipant(
                         entity=EntityReference(
                             name="ella",
+                            reference_kind=ReferenceKind.CONTEXTUAL_PERSON,
                         ),
                         role="subject",
                     )
