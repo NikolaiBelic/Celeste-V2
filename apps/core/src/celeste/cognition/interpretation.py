@@ -62,6 +62,7 @@ class CommunicativeAct(StrEnum):
     EXPRESS = "express"
     SPECULATE = "speculate"
 
+
 class EvidenceModality(StrEnum):
     TEXT = "text"
     AUDIO = "audio"
@@ -81,6 +82,7 @@ class AttributionType(StrEnum):
     ASSERTS = "asserts"
     REPORTS = "reports"
 
+
 class SemanticRelationType(StrEnum):
     CAUSE = "cause"
     REASON = "reason"
@@ -95,19 +97,23 @@ class SemanticRelationType(StrEnum):
     PRESUPPOSES = "presupposes"
     CONTRADICTS = "contradicts"
 
+
 class ScopeOperatorType(StrEnum):
     NEGATION = "negation"
     EXCLUSIVITY = "exclusivity"
+
 
 class ReferenceStatus(StrEnum):
     RESOLVED = "resolved"
     AMBIGUOUS = "ambiguous"
     UNRESOLVED = "unresolved"
 
+
 class RealityStatus(StrEnum):
     ACTUAL = "actual"
     HYPOTHETICAL = "hypothetical"
     COUNTERFACTUAL = "counterfactual"
+
 
 class QuantifierType(StrEnum):
     ALL = "all"
@@ -127,25 +133,26 @@ class ComparisonOperator(StrEnum):
     AT_LEAST = "at_least"
     AT_MOST = "at_most"
 
+
 class RevisionType(StrEnum):
     CORRECTION = "correction"
     RETRACTION = "retraction"
     REFORMULATION = "reformulation"
 
-class EntityMention(BaseModel):
-    semantic_id: str
 
-    text: str
+class Entity(BaseModel):
+    """
+    A turn-local semantic entity.
 
+    This is the referent in the semantic graph, not a textual mention.
+    Persistent identity resolution belongs to later cognitive stages.
+    """
+
+    entity_id: str
     canonical_name: str | None = None
-
     semantic_type: str | None = None
-
     identity_hint: str | None = None
-
-    qualifiers: dict[str, str] = Field(
-        default_factory=dict
-    )
+    qualifiers: dict[str, str] = Field(default_factory=dict)
 
     confidence: float = Field(
         default=1.0,
@@ -153,18 +160,42 @@ class EntityMention(BaseModel):
         le=1.0,
     )
 
+
+class EntityMention(BaseModel):
+    """
+    One surface occurrence in the current utterance.
+
+    Multiple mentions may point to the same Entity.
+    A mention may remain unresolved by leaving entity_id as None.
+    """
+
+    mention_id: str
+    text: str
+    entity_id: str | None = None
+
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+    )
+
+
+class EntityReferenceValue(BaseModel):
+    entity_id: str
+
+
 SemanticValue = (
     str
     | int
     | float
     | bool
-    | EntityMention
+    | EntityReferenceValue
     | None
 )
 
+
 class DiscourseReference(BaseModel):
     reference_id: str
-
     text: str
 
     candidate_entity_ids: list[str] = Field(
@@ -172,7 +203,6 @@ class DiscourseReference(BaseModel):
     )
 
     resolved_entity_id: str | None = None
-
     status: ReferenceStatus
 
     confidence: float = Field(
@@ -181,22 +211,11 @@ class DiscourseReference(BaseModel):
         le=1.0,
     )
 
+
 class DiscourseRevision(BaseModel):
-    """
-    A speaker changes, retracts or reformulates semantic content
-    inside the same turn.
-
-    Examples:
-    "Madrid... perdón, Getafe."
-    "Quiero hacerlo... pensándolo mejor, no."
-    """
-
     revision_id: str
-
     revision: RevisionType
-
     target_id: str
-
     replacement_id: str | None = None
 
     confidence: float = Field(
@@ -207,18 +226,7 @@ class DiscourseRevision(BaseModel):
 
 
 class EllipsisResolution(BaseModel):
-    """
-    Represents content omitted from the surface utterance but
-    recoverable from material in the same turn.
-
-    Example:
-    "Fernando fue al bar y Marta también."
-
-    "también" inherits semantic material from the first event.
-    """
-
     ellipsis_id: str
-
     text: str
 
     antecedent_ids: list[str] = Field(
@@ -226,7 +234,6 @@ class EllipsisResolution(BaseModel):
     )
 
     resolved_semantic_id: str | None = None
-
     status: ReferenceStatus
 
     confidence: float = Field(
@@ -238,9 +245,7 @@ class EllipsisResolution(BaseModel):
 
 class TemporalMeaning(BaseModel):
     frame: TimeFrame = TimeFrame.UNKNOWN
-
     expression: str | None = None
-
     start: str | None = None
     end: str | None = None
 
@@ -252,26 +257,16 @@ class TemporalMeaning(BaseModel):
 
 
 class Participant(BaseModel):
-    entity: EntityMention
-
+    entity_id: str
     role: str
 
+
 class Evidence(BaseModel):
-    """
-    A perceptual or external signal available during interpretation.
-
-    Evidence is not automatically a fact about the world.
-    """
-
     evidence_id: str
-
     modality: EvidenceModality
-
     signal_type: str
-
     value: str
-
-    source: EntityMention | None = None
+    source_entity_id: str | None = None
 
     confidence: float = Field(
         default=1.0,
@@ -279,18 +274,10 @@ class Evidence(BaseModel):
         le=1.0,
     )
 
+
 class EvidenceRelation(BaseModel):
-    """
-    Connects evidence to a semantic interpretation.
-
-    Example:
-    an audio signal may suggest distress without proving it.
-    """
-
     evidence_id: str
-
     relation: EvidenceRelationType
-
     target_id: str
 
     confidence: float = Field(
@@ -299,14 +286,11 @@ class EvidenceRelation(BaseModel):
         le=1.0,
     )
 
+
 class Event(BaseModel):
     semantic_id: str
-    reality: RealityStatus = RealityStatus.ACTUAL
 
-    kind: Literal[SituationKind.EVENT] = (
-        SituationKind.EVENT
-    )
-
+    kind: Literal[SituationKind.EVENT] = SituationKind.EVENT
     semantic_type: str
 
     participants: list[Participant] = Field(
@@ -314,9 +298,8 @@ class Event(BaseModel):
     )
 
     temporal: TemporalMeaning | None = None
-
     polarity: Polarity = Polarity.POSITIVE
-
+    reality: RealityStatus = RealityStatus.ACTUAL
     certainty: Certainty = Certainty.ASSERTED
 
     attributes: dict[str, SemanticValue] = Field(
@@ -332,12 +315,8 @@ class Event(BaseModel):
 
 class State(BaseModel):
     semantic_id: str
-    reality: RealityStatus = RealityStatus.ACTUAL
 
-    kind: Literal[SituationKind.STATE] = (
-        SituationKind.STATE
-    )
-
+    kind: Literal[SituationKind.STATE] = SituationKind.STATE
     semantic_type: str
 
     participants: list[Participant] = Field(
@@ -345,11 +324,9 @@ class State(BaseModel):
     )
 
     value: SemanticValue = None
-
     temporal: TemporalMeaning | None = None
-
     polarity: Polarity = Polarity.POSITIVE
-
+    reality: RealityStatus = RealityStatus.ACTUAL
     certainty: Certainty = Certainty.ASSERTED
 
     attributes: dict[str, SemanticValue] = Field(
@@ -365,14 +342,9 @@ class State(BaseModel):
 
 class Transition(BaseModel):
     semantic_id: str
-    reality: RealityStatus = RealityStatus.ACTUAL
 
-    kind: Literal[SituationKind.TRANSITION] = (
-        SituationKind.TRANSITION
-    )
-
+    kind: Literal[SituationKind.TRANSITION] = SituationKind.TRANSITION
     transition: TransitionKind
-
     semantic_state: str
 
     participants: list[Participant] = Field(
@@ -381,11 +353,9 @@ class Transition(BaseModel):
 
     previous_value: SemanticValue = None
     new_value: SemanticValue = None
-
     temporal: TemporalMeaning | None = None
-
     polarity: Polarity = Polarity.POSITIVE
-
+    reality: RealityStatus = RealityStatus.ACTUAL
     certainty: Certainty = Certainty.ASSERTED
 
     confidence: float = Field(
@@ -403,33 +373,21 @@ Situation = Annotated[
 
 class RelationContent(BaseModel):
     kind: Literal["relation"] = "relation"
-
-    subject: EntityMention
-
+    subject_entity_id: str
     predicate: str
-
     object: SemanticValue = None
-
     polarity: Polarity = Polarity.POSITIVE
 
 
 class SituationContent(BaseModel):
     kind: Literal["situation"] = "situation"
-
     situation: Situation
 
+
 class PropositionReferenceContent(BaseModel):
-    """
-    Allows a proposition to take another semantic node
-    as its content without duplicating that node.
-
-    Example:
-    Marta believes [Fernando knows X].
-    """
-
     kind: Literal["reference"] = "reference"
-
     target_id: str
+
 
 PropositionContent = Annotated[
     RelationContent
@@ -438,19 +396,15 @@ PropositionContent = Annotated[
     Field(discriminator="kind"),
 ]
 
+
 class Proposition(BaseModel):
     semantic_id: str
-
     mode: PropositionMode
-
-    holder: EntityMention
-
+    holder_entity_id: str
     content: PropositionContent
 
     polarity: Polarity = Polarity.POSITIVE
-
     temporal: TemporalMeaning | None = None
-
     certainty: Certainty = Certainty.ASSERTED
 
     confidence: float = Field(
@@ -461,17 +415,8 @@ class Proposition(BaseModel):
 
 
 class SemanticRelation(BaseModel):
-    """
-    A semantic connection between meanings in the same turn.
-
-    source_id and target_id refer only to semantic nodes from
-    this interpretation. They are not persistent memory IDs.
-    """
-
     source_id: str
-
     relation: SemanticRelationType
-
     target_id: str
 
     confidence: float = Field(
@@ -479,27 +424,12 @@ class SemanticRelation(BaseModel):
         ge=0.0,
         le=1.0,
     )
+
 
 class Attribution(BaseModel):
-    """
-    Describes who is the source of some semantic content.
-
-    It has its own semantic_id because the attribution itself
-    may be negated, qualified or otherwise scoped.
-
-    Example:
-    "Laura did not say X"
-
-    The negation applies to Laura's reporting act,
-    not necessarily to X.
-    """
-
     semantic_id: str
-
-    source: EntityMention
-
+    source_entity_id: str
     relation: AttributionType
-
     target_id: str
 
     confidence: float = Field(
@@ -507,27 +437,11 @@ class Attribution(BaseModel):
         ge=0.0,
         le=1.0,
     )
+
 
 class ScopeOperator(BaseModel):
-    """
-    An operator whose meaning applies to one specific
-    semantic node.
-
-    This preserves scope instead of flattening meanings.
-
-    Examples:
-
-    "Laura did not say X"
-        NEGATION -> attribution
-
-    "Laura said not X"
-        NEGATION -> X
-    """
-
     operator_id: str
-
     operator: ScopeOperatorType
-
     target_id: str
 
     confidence: float = Field(
@@ -535,6 +449,7 @@ class ScopeOperator(BaseModel):
         ge=0.0,
         le=1.0,
     )
+
 
 class Quantifier(BaseModel):
     operator_id: str
@@ -543,7 +458,10 @@ class Quantifier(BaseModel):
     role: str | None = None
     amount: int | None = None
     domain: str | None = None
-    exceptions: list[EntityMention] = Field(default_factory=list)
+
+    exception_entity_ids: list[str] = Field(
+        default_factory=list
+    )
 
     confidence: float = Field(
         default=1.0,
@@ -566,9 +484,14 @@ class Comparison(BaseModel):
         le=1.0,
     )
 
+
 class AlternativeGroup(BaseModel):
     semantic_id: str
-    member_ids: list[str] = Field(min_length=2)
+
+    member_ids: list[str] = Field(
+        min_length=2
+    )
+
     exclusive: bool | None = None
 
     confidence: float = Field(
@@ -577,13 +500,8 @@ class AlternativeGroup(BaseModel):
         le=1.0,
     )
 
+
 class InterpretationAlternative(BaseModel):
-    """
-    A plausible reading considered by Celeste.
-
-    An alternative is not an assertion about reality.
-    """
-
     description: str
 
     confidence: float = Field(
@@ -597,16 +515,11 @@ class InterpretationAlternative(BaseModel):
 
 
 class DiscourseMeaning(BaseModel):
-    """
-    What the speaker is doing by producing the utterance.
-    """
-
     acts: list[CommunicativeAct] = Field(
         default_factory=list
     )
 
     literal_meaning: str | None = None
-
     intended_meaning: str | None = None
 
     intended_meaning_confidence: float = Field(
@@ -621,12 +534,16 @@ class Interpretation(BaseModel):
         default_factory=DiscourseMeaning
     )
 
-    entities: list[EntityMention] = Field(
+    entities: list[Entity] = Field(
+        default_factory=list
+    )
+
+    mentions: list[EntityMention] = Field(
         default_factory=list
     )
 
     references: list[DiscourseReference] = Field(
-       default_factory=list
+        default_factory=list
     )
 
     revisions: list[DiscourseRevision] = Field(
@@ -692,8 +609,35 @@ class Interpretation(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_semantic_graph(self) -> "Interpretation":
+    def validate_graph(self) -> "Interpretation":
+        entity_ids: set[str] = set()
         semantic_ids: set[str] = set()
+        mention_ids: set[str] = set()
+        evidence_ids: set[str] = set()
+        reference_ids: set[str] = set()
+
+        def register_unique(
+            value: str,
+            registry: set[str],
+            *,
+            label: str,
+        ) -> None:
+            if value in registry:
+                raise ValueError(
+                    f"Duplicate {label} {value!r}"
+                )
+            registry.add(value)
+
+        def require_entity_id(
+            entity_id: str,
+            *,
+            owner: str,
+        ) -> None:
+            if entity_id not in entity_ids:
+                raise ValueError(
+                    f"{owner} references unknown entity_id "
+                    f"{entity_id!r}"
+                )
 
         def register_semantic_id(
             semantic_id: str,
@@ -705,95 +649,193 @@ class Interpretation(BaseModel):
                     f"{owner} uses duplicate semantic_id "
                     f"{semantic_id!r}"
                 )
-
             semantic_ids.add(semantic_id)
 
-        # -------------------------------------------------
-        # ENTITY IDS
-        # -------------------------------------------------
-
-        entity_ids: set[str] = set()
-
-        for entity in self.entities:
-            if entity.semantic_id in entity_ids:
+        def require_semantic_id(
+            semantic_id: str,
+            *,
+            owner: str,
+        ) -> None:
+            if semantic_id not in semantic_ids:
                 raise ValueError(
-                    "Duplicate entity semantic_id "
-                    f"{entity.semantic_id!r}"
+                    f"{owner} references unknown semantic_id "
+                    f"{semantic_id!r}"
                 )
 
-            entity_ids.add(entity.semantic_id)
+        def validate_semantic_value(
+            value: SemanticValue,
+            *,
+            owner: str,
+        ) -> None:
+            if isinstance(value, EntityReferenceValue):
+                require_entity_id(
+                    value.entity_id,
+                    owner=owner,
+                )
 
-        # -------------------------------------------------
-        # SEMANTIC NODE IDS
-        # -------------------------------------------------
+        def validate_situation_entities(
+            situation: Situation,
+            *,
+            owner: str,
+        ) -> None:
+            for participant in situation.participants:
+                require_entity_id(
+                    participant.entity_id,
+                    owner=owner,
+                )
 
-        # Top-level situations.
+            if isinstance(situation, State):
+                validate_semantic_value(
+                    situation.value,
+                    owner=f"{owner}.value",
+                )
+
+                for key, value in situation.attributes.items():
+                    validate_semantic_value(
+                        value,
+                        owner=f"{owner}.attributes[{key!r}]",
+                    )
+
+            elif isinstance(situation, Event):
+                for key, value in situation.attributes.items():
+                    validate_semantic_value(
+                        value,
+                        owner=f"{owner}.attributes[{key!r}]",
+                    )
+
+            elif isinstance(situation, Transition):
+                validate_semantic_value(
+                    situation.previous_value,
+                    owner=f"{owner}.previous_value",
+                )
+                validate_semantic_value(
+                    situation.new_value,
+                    owner=f"{owner}.new_value",
+                )
+
+        # Entities are the canonical turn-local referents.
+        for entity in self.entities:
+            register_unique(
+                entity.entity_id,
+                entity_ids,
+                label="entity_id",
+            )
+
+        # Surface mentions may repeat the same entity, but each
+        # occurrence gets its own mention_id.
+        for mention in self.mentions:
+            register_unique(
+                mention.mention_id,
+                mention_ids,
+                label="mention_id",
+            )
+
+            if mention.entity_id is not None:
+                require_entity_id(
+                    mention.entity_id,
+                    owner=(
+                        f"EntityMention "
+                        f"{mention.mention_id!r}"
+                    ),
+                )
+
+        # Register all semantic nodes first, so graph references
+        # may point forward or backward within the same turn.
         for situation in self.situations:
             register_semantic_id(
                 situation.semantic_id,
                 owner="Situation",
             )
 
-        # Propositions.
         for proposition in self.propositions:
             register_semantic_id(
                 proposition.semantic_id,
                 owner="Proposition",
             )
 
-        # Situations nested inside propositions are also
-        # addressable semantic nodes.
-        #
-        # Do not treat an already registered nested ID as a
-        # duplicate here because the same semantic content may
-        # legitimately be reused by multiple propositions.
-        for proposition in self.propositions:
             if isinstance(
                 proposition.content,
                 SituationContent,
             ):
-                semantic_ids.add(
-                    proposition.content.situation.semantic_id
+                register_semantic_id(
+                    proposition.content.situation.semantic_id,
+                    owner=(
+                        f"Nested situation in proposition "
+                        f"{proposition.semantic_id!r}"
+                    ),
                 )
 
-        # Attribution acts.
         for attribution in self.attributions:
             register_semantic_id(
                 attribution.semantic_id,
                 owner="Attribution",
             )
 
-        # Comparisons.
         for comparison in self.comparisons:
             register_semantic_id(
                 comparison.semantic_id,
                 owner="Comparison",
             )
 
-        # Explicit alternative groups.
         for group in self.alternative_groups:
             register_semantic_id(
                 group.semantic_id,
                 owner="AlternativeGroup",
             )
 
-        def require_semantic_id(
-            target_id: str,
-            *,
-            owner: str,
-        ) -> None:
-            if target_id not in semantic_ids:
-                raise ValueError(
-                    f"{owner} references unknown semantic_id "
-                    f"{target_id!r}"
+        # Validate entity references in situations.
+        for situation in self.situations:
+            validate_situation_entities(
+                situation,
+                owner=(
+                    f"Situation {situation.semantic_id!r}"
+                ),
+            )
+
+        # Propositions.
+        for proposition in self.propositions:
+            require_entity_id(
+                proposition.holder_entity_id,
+                owner=(
+                    f"Proposition "
+                    f"{proposition.semantic_id!r}"
+                ),
+            )
+
+            if isinstance(
+                proposition.content,
+                RelationContent,
+            ):
+                require_entity_id(
+                    proposition.content.subject_entity_id,
+                    owner=(
+                        f"Proposition "
+                        f"{proposition.semantic_id!r}"
+                        ".content"
+                    ),
+                )
+                validate_semantic_value(
+                    proposition.content.object,
+                    owner=(
+                        f"Proposition "
+                        f"{proposition.semantic_id!r}"
+                        ".content.object"
+                    ),
                 )
 
-        # -------------------------------------------------
-        # PROPOSITION REFERENCES
-        # -------------------------------------------------
+            elif isinstance(
+                proposition.content,
+                SituationContent,
+            ):
+                validate_situation_entities(
+                    proposition.content.situation,
+                    owner=(
+                        f"Nested situation "
+                        f"{proposition.content.situation.semantic_id!r}"
+                    ),
+                )
 
-        for proposition in self.propositions:
-            if isinstance(
+            elif isinstance(
                 proposition.content,
                 PropositionReferenceContent,
             ):
@@ -805,26 +847,26 @@ class Interpretation(BaseModel):
                     ),
                 )
 
-        # -------------------------------------------------
-        # SEMANTIC RELATIONS
-        # -------------------------------------------------
-
+        # Semantic relations.
         for relation in self.semantic_relations:
             require_semantic_id(
                 relation.source_id,
                 owner="SemanticRelation.source_id",
             )
-
             require_semantic_id(
                 relation.target_id,
                 owner="SemanticRelation.target_id",
             )
 
-        # -------------------------------------------------
-        # ATTRIBUTIONS
-        # -------------------------------------------------
-
+        # Attribution.
         for attribution in self.attributions:
+            require_entity_id(
+                attribution.source_entity_id,
+                owner=(
+                    f"Attribution "
+                    f"{attribution.semantic_id!r}"
+                ),
+            )
             require_semantic_id(
                 attribution.target_id,
                 owner=(
@@ -833,10 +875,7 @@ class Interpretation(BaseModel):
                 ),
             )
 
-        # -------------------------------------------------
-        # SCOPE
-        # -------------------------------------------------
-
+        # Scope.
         for operator in self.scope_operators:
             require_semantic_id(
                 operator.target_id,
@@ -846,10 +885,7 @@ class Interpretation(BaseModel):
                 ),
             )
 
-        # -------------------------------------------------
-        # QUANTIFIERS
-        # -------------------------------------------------
-
+        # Quantifiers.
         for quantifier in self.quantifiers:
             require_semantic_id(
                 quantifier.target_id,
@@ -859,10 +895,33 @@ class Interpretation(BaseModel):
                 ),
             )
 
-        # -------------------------------------------------
-        # EXPLICIT ALTERNATIVES
-        # -------------------------------------------------
+            for entity_id in quantifier.exception_entity_ids:
+                require_entity_id(
+                    entity_id,
+                    owner=(
+                        f"Quantifier "
+                        f"{quantifier.operator_id!r}"
+                    ),
+                )
 
+        # Comparisons.
+        for comparison in self.comparisons:
+            validate_semantic_value(
+                comparison.left,
+                owner=(
+                    f"Comparison "
+                    f"{comparison.semantic_id!r}.left"
+                ),
+            )
+            validate_semantic_value(
+                comparison.right,
+                owner=(
+                    f"Comparison "
+                    f"{comparison.semantic_id!r}.right"
+                ),
+            )
+
+        # Explicit alternatives.
         for group in self.alternative_groups:
             for member_id in group.member_ids:
                 require_semantic_id(
@@ -873,20 +932,22 @@ class Interpretation(BaseModel):
                     ),
                 )
 
-        # -------------------------------------------------
-        # EVIDENCE
-        # -------------------------------------------------
-
-        evidence_ids: set[str] = set()
-
+        # Evidence.
         for evidence in self.evidence:
-            if evidence.evidence_id in evidence_ids:
-                raise ValueError(
-                    "Duplicate evidence_id "
-                    f"{evidence.evidence_id!r}"
-                )
+            register_unique(
+                evidence.evidence_id,
+                evidence_ids,
+                label="evidence_id",
+            )
 
-            evidence_ids.add(evidence.evidence_id)
+            if evidence.source_entity_id is not None:
+                require_entity_id(
+                    evidence.source_entity_id,
+                    owner=(
+                        f"Evidence "
+                        f"{evidence.evidence_id!r}"
+                    ),
+                )
 
         for relation in self.evidence_relations:
             if relation.evidence_id not in evidence_ids:
@@ -900,24 +961,15 @@ class Interpretation(BaseModel):
                 owner="EvidenceRelation.target_id",
             )
 
-        # -------------------------------------------------
-        # DISCOURSE REFERENCES
-        # -------------------------------------------------
-
-        reference_ids: set[str] = set()
-
+        # Discourse references.
         for reference in self.references:
-            if reference.reference_id in reference_ids:
-                raise ValueError(
-                    "Duplicate reference_id "
-                    f"{reference.reference_id!r}"
-                )
-
-            reference_ids.add(reference.reference_id)
-
-            candidate_ids = (
-                reference.candidate_entity_ids
+            register_unique(
+                reference.reference_id,
+                reference_ids,
+                label="reference_id",
             )
+
+            candidate_ids = reference.candidate_entity_ids
 
             if len(candidate_ids) != len(set(candidate_ids)):
                 raise ValueError(
@@ -927,18 +979,15 @@ class Interpretation(BaseModel):
                 )
 
             for candidate_id in candidate_ids:
-                if candidate_id not in entity_ids:
-                    raise ValueError(
+                require_entity_id(
+                    candidate_id,
+                    owner=(
                         f"DiscourseReference "
-                        f"{reference.reference_id!r} "
-                        "references unknown entity "
-                        f"{candidate_id!r}"
-                    )
+                        f"{reference.reference_id!r}"
+                    ),
+                )
 
-            if (
-                reference.status
-                == ReferenceStatus.RESOLVED
-            ):
+            if reference.status == ReferenceStatus.RESOLVED:
                 if reference.resolved_entity_id is None:
                     raise ValueError(
                         f"Resolved DiscourseReference "
@@ -946,16 +995,13 @@ class Interpretation(BaseModel):
                         "requires resolved_entity_id"
                     )
 
-                if (
-                    reference.resolved_entity_id
-                    not in entity_ids
-                ):
-                    raise ValueError(
+                require_entity_id(
+                    reference.resolved_entity_id,
+                    owner=(
                         f"Resolved DiscourseReference "
-                        f"{reference.reference_id!r} "
-                        "references unknown resolved entity "
-                        f"{reference.resolved_entity_id!r}"
-                    )
+                        f"{reference.reference_id!r}"
+                    ),
+                )
 
                 if (
                     reference.resolved_entity_id
@@ -967,10 +1013,7 @@ class Interpretation(BaseModel):
                         "must resolve to one of its candidates"
                     )
 
-            elif (
-                reference.status
-                == ReferenceStatus.AMBIGUOUS
-            ):
+            elif reference.status == ReferenceStatus.AMBIGUOUS:
                 if reference.resolved_entity_id is not None:
                     raise ValueError(
                         f"Ambiguous DiscourseReference "
@@ -985,10 +1028,7 @@ class Interpretation(BaseModel):
                         "requires at least two candidates"
                     )
 
-            elif (
-                reference.status
-                == ReferenceStatus.UNRESOLVED
-            ):
+            elif reference.status == ReferenceStatus.UNRESOLVED:
                 if reference.resolved_entity_id is not None:
                     raise ValueError(
                         f"Unresolved DiscourseReference "
@@ -996,10 +1036,7 @@ class Interpretation(BaseModel):
                         "cannot have resolved_entity_id"
                     )
 
-        # -------------------------------------------------
-        # SAME-TURN REVISIONS
-        # -------------------------------------------------
-
+        # Same-turn revisions.
         for revision in self.revisions:
             require_semantic_id(
                 revision.target_id,
@@ -1018,10 +1055,7 @@ class Interpretation(BaseModel):
                     ),
                 )
 
-        # -------------------------------------------------
-        # ELLIPSIS
-        # -------------------------------------------------
-
+        # Ellipsis.
         for ellipsis in self.ellipsis_resolutions:
             for antecedent_id in ellipsis.antecedent_ids:
                 require_semantic_id(
