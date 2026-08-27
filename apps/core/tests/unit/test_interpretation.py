@@ -1842,3 +1842,89 @@ def test_pronoun_mention_and_reference_can_share_resolved_entity():
     )
 
     assert interpretation.mentions[1].entity_id == laura.entity_id
+
+def test_participant_can_reference_ambiguous_discourse_reference():
+    laura = person(
+        "entity_laura",
+        "Laura",
+    )
+    marta = person(
+        "entity_marta",
+        "Marta",
+    )
+
+    reference = DiscourseReference(
+        reference_id="reference_ella_1",
+        text="ella",
+        candidate_entity_ids=[
+            laura.entity_id,
+            marta.entity_id,
+        ],
+        status=ReferenceStatus.AMBIGUOUS,
+    )
+
+    leave = Event(
+        semantic_id="leave_1",
+        semantic_type="leave",
+        participants=[
+            Participant(
+                reference_id="reference_ella_1",
+                role="actor",
+            )
+        ],
+    )
+
+    interpretation = Interpretation(
+        entities=[
+            laura,
+            marta,
+        ],
+        references=[reference],
+        situations=[leave],
+    )
+
+    assert (
+        interpretation.situations[0]
+        .participants[0]
+        .reference_id
+        == "reference_ella_1"
+    )
+
+    assert (
+        interpretation.situations[0]
+        .participants[0]
+        .entity_id
+        is None
+    )
+
+def test_participant_reference_must_exist():
+    event = Event(
+        semantic_id="leave_1",
+        semantic_type="leave",
+        participants=[
+            Participant(
+                reference_id="missing_reference",
+                role="actor",
+            )
+        ],
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="unknown discourse reference",
+    ):
+        Interpretation(
+            situations=[event],
+        )
+
+
+def test_participant_requires_exactly_one_target():
+    with pytest.raises(
+        ValidationError,
+        match="exactly one",
+    ):
+        Participant(
+            entity_id="entity_laura",
+            reference_id="reference_ella",
+            role="actor",
+        )

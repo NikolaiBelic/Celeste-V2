@@ -257,8 +257,28 @@ class TemporalMeaning(BaseModel):
 
 
 class Participant(BaseModel):
-    entity_id: str
     role: str
+
+    entity_id: str | None = None
+    reference_id: str | None = None
+
+    @model_validator(mode="after")
+    def validate_target(self) -> "Participant":
+        targets = sum(
+            value is not None
+            for value in (
+                self.entity_id,
+                self.reference_id,
+            )
+        )
+
+        if targets != 1:
+            raise ValueError(
+                "Participant requires exactly one of "
+                "entity_id or reference_id"
+            )
+
+        return self
 
 
 class Evidence(BaseModel):
@@ -667,7 +687,10 @@ class Interpretation(BaseModel):
             *,
             owner: str,
         ) -> None:
-            if isinstance(value, EntityReferenceValue):
+            if isinstance(
+                value,
+                EntityReferenceValue,
+            ):
                 require_entity_id(
                     value.entity_id,
                     owner=owner,
@@ -679,40 +702,72 @@ class Interpretation(BaseModel):
             owner: str,
         ) -> None:
             for participant in situation.participants:
-                require_entity_id(
-                    participant.entity_id,
-                    owner=owner,
-                )
+                if participant.entity_id is not None:
+                    require_entity_id(
+                        participant.entity_id,
+                        owner=owner,
+                    )
 
-            if isinstance(situation, State):
+                elif participant.reference_id is not None:
+                    if (
+                        participant.reference_id
+                        not in reference_ids
+                    ):
+                        raise ValueError(
+                            f"{owner} references unknown "
+                            "discourse reference "
+                            f"{participant.reference_id!r}"
+                        )
+
+            if isinstance(
+                situation,
+                State,
+            ):
                 validate_semantic_value(
                     situation.value,
                     owner=f"{owner}.value",
                 )
 
-                for key, value in situation.attributes.items():
+                for key, value in (
+                    situation.attributes.items()
+                ):
                     validate_semantic_value(
                         value,
-                        owner=f"{owner}.attributes[{key!r}]",
+                        owner=(
+                            f"{owner}.attributes"
+                            f"[{key!r}]"
+                        ),
                     )
 
-            elif isinstance(situation, Event):
-                for key, value in situation.attributes.items():
+            elif isinstance(
+                situation,
+                Event,
+            ):
+                for key, value in (
+                    situation.attributes.items()
+                ):
                     validate_semantic_value(
                         value,
-                        owner=f"{owner}.attributes[{key!r}]",
+                        owner=(
+                            f"{owner}.attributes"
+                            f"[{key!r}]"
+                        ),
                     )
 
-            elif isinstance(situation, Transition):
+            elif isinstance(
+                situation,
+                Transition,
+            ):
                 validate_semantic_value(
                     situation.previous_value,
                     owner=f"{owner}.previous_value",
                 )
+
                 validate_semantic_value(
                     situation.new_value,
                     owner=f"{owner}.new_value",
                 )
-
+                
         # Entities are the canonical turn-local referents.
         for entity in self.entities:
             register_unique(
@@ -738,6 +793,13 @@ class Interpretation(BaseModel):
                         f"{mention.mention_id!r}"
                     ),
                 )
+
+        for reference in self.references:
+            register_unique(
+                reference.reference_id,
+                reference_ids,
+                label="reference_id",
+            )
 
         # Register all semantic nodes first, so graph references
         # may point forward or backward within the same turn.
@@ -963,11 +1025,6 @@ class Interpretation(BaseModel):
 
         # Discourse references.
         for reference in self.references:
-            register_unique(
-                reference.reference_id,
-                reference_ids,
-                label="reference_id",
-            )
 
             candidate_ids = reference.candidate_entity_ids
 

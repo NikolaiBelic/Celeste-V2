@@ -1,0 +1,278 @@
+CELESTE V2 — ROADMAP REAL DE CONSTRUCCIÓN
+========================================
+
+Objetivo general
+----------------
+Construir Celeste por capas cognitivas independientes, cerrando cada módulo con una base sólida antes de conectarlo con los siguientes. La prioridad no es avanzar rápido, sino conseguir que cada pieza entregue información fiable al resto del sistema.
+
+1. Interpretación
+-----------------
+Comprender qué significa literalmente el mensaje del usuario: entidades, eventos, estados, transiciones, deseos, creencias, intenciones, hipótesis, negación, correcciones, referencias, ambigüedad, preguntas, peticiones y relaciones semánticas básicas.
+
+Objetivo: transformar lenguaje natural en una representación semántica estructurada y fiable.
+
+2. Contexto conversacional
+--------------------------
+Interpretar cada mensaje teniendo en cuenta los turnos anteriores: resolver “ella”, “eso”, “lo de antes”, temas activos, cambios de tema e información implícita dependiente del contexto.
+
+Objetivo: que Celeste no interprete cada mensaje como si fuera una conversación nueva.
+
+3. Temporalidad
+---------------
+Comprender y resolver pasado, presente, futuro, expresiones como “mañana”, “ayer”, “dentro de dos horas”, duración de estados e información vigente o histórica.
+
+Objetivo: separar la comprensión lingüística del tiempo de su resolución respecto al reloj real.
+
+4. Modelo de conocimiento / mundo
+---------------------------------
+Representar personas, objetos, lugares, relaciones, eventos, estados y conceptos que Celeste conoce.
+
+Objetivo: construir el “mundo interno” sobre el que razonará Celeste.
+
+5. Procedencia y evidencia
+--------------------------
+Registrar de dónde procede cada información: usuario, Celeste, web, Gemini, herramientas, sensores, inferencias, recuerdos u otras personas citadas.
+
+Objetivo: evitar convertir una afirmación, rumor o inferencia en un hecho objetivo.
+
+6. Recall
+---------
+Recuperar únicamente la información relevante de memoria para el turno actual.
+
+Objetivo: evitar cargar toda la memoria de Celeste en cada interacción.
+
+7. Hipótesis e incertidumbre
+----------------------------
+Representar posibilidades, interpretaciones alternativas, dudas, confianza, inferencias e información contradictoria.
+
+Objetivo: que Celeste pueda manejar incertidumbre sin inventar certezas.
+
+8. Modelo del usuario
+---------------------
+Mantener una representación estructurada de preferencias, rutinas, gustos, relaciones, proyectos, objetivos y hábitos conversacionales del usuario.
+
+Objetivo: permitir personalización sin mezclar el modelo del usuario con hechos generales del mundo.
+
+9. Modelo de sí misma
+---------------------
+Mantener una representación de Celeste sobre sus capacidades, limitaciones, herramientas disponibles, conocimiento, decisiones y objetivos activos.
+
+Objetivo: dar continuidad e identidad funcional a Celeste.
+
+10. Deliberación
+----------------
+Decidir qué debe hacer Celeste: responder, preguntar, buscar, usar una herramienta, esperar, ejecutar una acción, pedir confirmación o no hacer nada.
+
+Objetivo: separar comprensión y toma de decisiones.
+
+11. Objetivos e intenciones propias
+-----------------------------------
+Mantener objetivos temporales y subobjetivos durante tareas o conversaciones largas.
+
+Objetivo: permitir planificación coherente y continuidad.
+
+12. Curiosidad / Open Loops
+---------------------------
+Mantener preguntas pendientes, información incompleta, temas abiertos y cuestiones que merecen retomarse.
+
+Objetivo: dar continuidad y seguimiento natural.
+
+13. Estado interno / afecto funcional
+-------------------------------------
+Mantener variables internas como curiosidad, confianza, preocupación, energía conversacional, implicación, tono juguetón o señales de frustración.
+
+Objetivo: permitir respuestas más humanas sin confundir estos estados funcionales con emociones humanas reales.
+
+14. Decisiones de memoria
+-------------------------
+Decidir qué debe guardarse y qué es efímero: preferencias, relaciones, estados, eventos, cambios y datos que sustituyen información anterior.
+
+Objetivo: evitar guardar todo indiscriminadamente.
+
+15. Validación y reconciliación
+-------------------------------
+Comparar nueva información con conocimiento previo para detectar contradicciones, cambios de estado, datos obsoletos, correcciones y relaciones terminadas.
+
+Objetivo: mantener una memoria coherente a lo largo del tiempo.
+
+16. Planificación
+-----------------
+Crear planes de varios pasos cuando una tarea lo requiera.
+
+Ejemplo:
+buscar información → comparar fuentes → validar → decidir → responder.
+
+Objetivo: permitir tareas complejas en lugar de respuestas de un solo paso.
+
+17. Herramientas y acciones
+---------------------------
+Permitir que Celeste interactúe con web, Gemini, APIs, navegador, sistema operativo, archivos, GitHub, YouTube, calendario, scripts, domótica y aplicaciones locales.
+
+Principio: las herramientas proporcionan datos o ejecutan acciones; no controlan la personalidad ni la respuesta final de Celeste.
+
+18. Observación del resultado
+-----------------------------
+Comprobar qué ocurrió después de ejecutar una acción y actualizar el estado en función del éxito o fallo.
+
+Objetivo: evitar que Celeste diga “hecho” cuando una acción realmente ha fallado.
+
+19. Conversation Planner
+------------------------
+Decidir qué comunicar, qué omitir, si preguntar algo, cuánto explicar, si reaccionar a un comentario secundario o si introducir humor.
+
+Objetivo: separar “qué sé” y “qué debo hacer” de “qué voy a decir”.
+
+20. Personalidad / expresión
+----------------------------
+Definir humor, sarcasmo, cercanía, formalidad, ritmo, estilo y forma de reaccionar.
+
+Principio: la personalidad modifica la expresión, no los hechos ni la lógica.
+
+21. Respuesta
+-------------
+Generar el lenguaje natural final combinando decisión, contexto, información interna, herramientas, personalidad y Conversation Planner.
+
+Objetivo: que Celeste hable con su propia voz incluso cuando los datos procedan de Gemini, web u otra herramienta.
+
+22. Reflexión / metacognición
+-----------------------------
+Evaluar determinadas interacciones: si entendió correctamente, si resolvió la petición, si hizo inferencias demasiado fuertes, si algo debe recordarse o si queda algo pendiente.
+
+Objetivo: permitir autoevaluación y mejora del estado cognitivo.
+
+23. Consolidación de memoria
+----------------------------
+Transformar información episódica en conocimiento duradero, combinar recuerdos repetidos, reducir ruido y mantener historia.
+
+Objetivo: evitar una memoria llena de fragmentos redundantes.
+
+24. Aprendizaje de patrones
+---------------------------
+Detectar preferencias recurrentes, rutinas, formas habituales de expresarse, reacciones frecuentes y patrones de decisión.
+
+Objetivo: permitir adaptación progresiva sin hardcodear cada comportamiento.
+
+25. Proactividad
+----------------
+Permitir que Celeste inicie una intervención cuando tenga sentido: recordar algo pendiente, avisar de un cambio importante, retomar un open loop o sugerir algo relacionado con un objetivo activo.
+
+Objetivo: dejar de depender exclusivamente del patrón “usuario pregunta → Celeste responde”.
+
+26. Cognitive Router
+--------------------
+Decidir qué módulos deben ejecutarse para cada interacción.
+
+Ejemplo simple:
+“Hola” → interpretación ligera → contexto mínimo → respuesta.
+
+Ejemplo complejo:
+consulta actual → interpretación → contexto → recall → temporalidad → deliberación → herramientas → observación → planner → respuesta.
+
+Objetivo: reducir latencia y evitar ejecutar todo el sistema en cada turno.
+
+27. Persistencia PostgreSQL
+---------------------------
+Persistir únicamente los modelos cognitivos que hayan demostrado ser necesarios: entidades, relaciones, estados, eventos, memorias, episodios, creencias, preferencias, objetivos, open loops e historial temporal.
+
+Principio: diseñar la persistencia después de conocer el modelo cognitivo, no al revés.
+
+
+CAPA TRANSVERSAL: EVALUACIÓN
+============================
+
+Cada módulo debe tener su propia suite de pruebas antes de considerarse estable.
+
+Interpretation:
+- Frases simples.
+- Negación.
+- Creencias.
+- Deseos.
+- Ambigüedad.
+- Correcciones.
+- Reported speech.
+- Preguntas.
+- Peticiones.
+
+Contexto:
+- Conversaciones multitur­no.
+- Pronombres.
+- Cambios de tema.
+- Referencias anteriores.
+
+Temporalidad:
+- Fechas relativas.
+- Duraciones.
+- Cambios de estado.
+- Vigencia.
+
+Memoria:
+- Contradicciones.
+- Sustituciones.
+- Información histórica.
+- Relaciones terminadas.
+
+Deliberación:
+- Decidir entre responder, preguntar, buscar o actuar.
+
+Herramientas:
+- Éxito.
+- Error.
+- Reintentos.
+- Verificación del resultado.
+
+Conversation Planner:
+- Respuestas con varias intenciones.
+- Información + reacción.
+- Humor contextual.
+- Preguntas de seguimiento.
+
+
+AGRUPACIÓN CONCEPTUAL
+=====================
+
+PERCEPCIÓN
+- Interpretación.
+- Contexto conversacional.
+- Temporalidad.
+
+CONOCIMIENTO
+- Modelo de conocimiento/mundo.
+- Procedencia y evidencia.
+- Recall.
+- Modelo del usuario.
+
+PENSAMIENTO
+- Hipótesis e incertidumbre.
+- Deliberación.
+- Objetivos.
+- Curiosidad.
+
+AGENCIA
+- Planificación.
+- Herramientas y acciones.
+- Observación del resultado.
+
+IDENTIDAD
+- Modelo de sí misma.
+- Estado interno.
+- Personalidad.
+- Reflexión.
+- Memoria.
+
+
+FILOSOFÍA DE CONSTRUCCIÓN
+=========================
+
+1. Trabajar un módulo concreto cada vez.
+2. Definir claramente su responsabilidad.
+3. Crear modelos e interfaces estables.
+4. Probar casos reales y casos límite.
+5. Corregir errores estructurales antes de seguir.
+6. Evitar hardcodear lenguaje siempre que sea posible.
+7. Separar interpretación, decisión, memoria, herramientas y expresión.
+8. No permitir que una fuente externa controle directamente la voz de Celeste.
+9. Mantener incertidumbre y procedencia como conceptos de primera clase.
+10. Conectar módulos únicamente cuando cada pieza tenga una base suficientemente fiable.
+
+Meta final:
+Que comportamientos complejos aparezcan por la combinación de módulos sólidos —memoria, contexto, deliberación, herramientas, personalidad y reflexión— en lugar de programarlos frase por frase.
