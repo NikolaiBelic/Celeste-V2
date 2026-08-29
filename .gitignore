@@ -53,3 +53,9 @@ temp/
 # Celeste local runtime data
 runtime/
 local-data/
+
+# Celeste development artifacts
+result*.txt
+results*.txt
+benchmark_*.txt
+raw_schema.json

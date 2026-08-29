@@ -139,6 +139,41 @@ class RevisionType(StrEnum):
     RETRACTION = "retraction"
     REFORMULATION = "reformulation"
 
+class ParticipantRole(StrEnum):
+    AGENT = "agent"
+    EXPERIENCER = "experiencer"
+    PATIENT = "patient"
+    THEME = "theme"
+    RECIPIENT = "recipient"
+    TARGET = "target"
+    SOURCE = "source"
+    DESTINATION = "destination"
+    LOCATION = "location"
+    INSTRUMENT = "instrument"
+
+class Participant(BaseModel):
+    role: ParticipantRole
+
+    entity_id: str | None = None
+    reference_id: str | None = None
+
+    @model_validator(mode="after")
+    def validate_target(self) -> "Participant":
+        targets = sum(
+            value is not None
+            for value in (
+                self.entity_id,
+                self.reference_id,
+            )
+        )
+
+        if targets != 1:
+            raise ValueError(
+                "Participant requires exactly one of "
+                "entity_id or reference_id"
+            )
+
+        return self
 
 class Entity(BaseModel):
     """
@@ -255,32 +290,6 @@ class TemporalMeaning(BaseModel):
         le=1.0,
     )
 
-
-class Participant(BaseModel):
-    role: str
-
-    entity_id: str | None = None
-    reference_id: str | None = None
-
-    @model_validator(mode="after")
-    def validate_target(self) -> "Participant":
-        targets = sum(
-            value is not None
-            for value in (
-                self.entity_id,
-                self.reference_id,
-            )
-        )
-
-        if targets != 1:
-            raise ValueError(
-                "Participant requires exactly one of "
-                "entity_id or reference_id"
-            )
-
-        return self
-
-
 class Evidence(BaseModel):
     evidence_id: str
     modality: EvidenceModality
@@ -364,8 +373,8 @@ class Transition(BaseModel):
     semantic_id: str
 
     kind: Literal[SituationKind.TRANSITION] = SituationKind.TRANSITION
-    transition: TransitionKind
-    semantic_state: str
+    transition: TransitionKind | None = None
+    semantic_state: str | None = None
 
     participants: list[Participant] = Field(
         default_factory=list
@@ -445,6 +454,23 @@ class SemanticRelation(BaseModel):
         le=1.0,
     )
 
+class SemanticContentLink(BaseModel):
+    """
+    Structural link between a semantic node and the semantic content
+    it contains or expresses.
+
+    This is not a participant relation and not a general semantic
+    relation such as cause, contrast, or temporal ordering.
+    """
+
+    source_id: str
+    target_id: str
+
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+    )
 
 class Attribution(BaseModel):
     semantic_id: str
@@ -583,6 +609,10 @@ class Interpretation(BaseModel):
     )
 
     semantic_relations: list[SemanticRelation] = Field(
+        default_factory=list
+    )
+
+    semantic_content_links: list[SemanticContentLink] = Field(
         default_factory=list
     )
 
@@ -918,6 +948,17 @@ class Interpretation(BaseModel):
             require_semantic_id(
                 relation.target_id,
                 owner="SemanticRelation.target_id",
+            )
+
+        # Structural semantic content links.
+        for link in self.semantic_content_links:
+            require_semantic_id(
+                link.source_id,
+                owner="SemanticContentLink.source_id",
+            )
+            require_semantic_id(
+                link.target_id,
+                owner="SemanticContentLink.target_id",
             )
 
         # Attribution.

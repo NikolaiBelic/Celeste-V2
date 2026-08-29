@@ -13,6 +13,7 @@ from celeste.cognition.interpretation import (
     Event,
     Interpretation,
     Participant,
+    ParticipantRole,
     Polarity,
     Proposition,
     PropositionMode,
@@ -22,6 +23,9 @@ from celeste.cognition.interpretation import (
     RevisionType,
     SemanticRelation,
     SemanticRelationType,
+    SemanticContentLink,
+    ScopeOperator,
+    ScopeOperatorType,
     SituationContent,
     State,
     TemporalMeaning,
@@ -36,6 +40,8 @@ from celeste.cognition.raw_interpretation import (
     RawProposition,
     RawReference,
     RawRevision,
+    RawScopeOperator,
+    RawSemanticContentLink,
     RawSemanticRelation,
     RawSituation,
     RawSituationKind,
@@ -71,20 +77,29 @@ def _normalize_temporal(
         confidence=temporal.confidence,
     )
 
-
 def _normalize_participants(
     participants,
 ) -> list[Participant]:
     normalized: list[Participant] = []
 
     for participant in participants:
+        try:
+            role = ParticipantRole(
+                participant.role.value
+            )
+        except ValueError as exc:
+            raise InterpretationNormalizationError(
+                "Unsupported participant role "
+                f"{participant.role!r}"
+            ) from exc
+
         if participant.entity_temp_id is not None:
             normalized.append(
                 Participant(
                     entity_id=_entity_id(
                         participant.entity_temp_id
                     ),
-                    role=participant.role,
+                    role=role,
                 )
             )
 
@@ -94,7 +109,7 @@ def _normalize_participants(
                     reference_id=_reference_id(
                         participant.reference_temp_id
                     ),
-                    role=participant.role,
+                    role=role,
                 )
             )
 
@@ -104,7 +119,6 @@ def _normalize_participants(
             )
 
     return normalized
-
 
 def _normalize_event(
     raw: RawSituation,
@@ -161,23 +175,14 @@ def _normalize_transition(
     raw: RawSituation,
     semantic_id: str,
 ) -> Transition:
-    if raw.semantic_state is None:
-        raise InterpretationNormalizationError(
-            f"Raw transition {raw.temp_id!r} "
-            "requires semantic_state"
-        )
-
-    if raw.transition is None:
-        raise InterpretationNormalizationError(
-            f"Raw transition {raw.temp_id!r} "
-            "requires transition"
-        )
 
     return Transition(
         semantic_id=semantic_id,
         semantic_state=raw.semantic_state,
-        transition=TransitionKind(
-            raw.transition
+        transition=(
+            TransitionKind(raw.transition)
+            if raw.transition is not None
+            else None
         ),
         participants=_normalize_participants(
             raw.participants
@@ -483,6 +488,43 @@ def _normalize_relation(
         confidence=raw.confidence,
     )
 
+def _normalize_semantic_content_link(
+    raw: RawSemanticContentLink,
+    mapping: dict[str, str],
+) -> SemanticContentLink:
+    return SemanticContentLink(
+        source_id=_require_semantic_mapping(
+            raw.source_id,
+            mapping,
+            owner="RawSemanticContentLink.source_id",
+        ),
+        target_id=_require_semantic_mapping(
+            raw.target_id,
+            mapping,
+            owner="RawSemanticContentLink.target_id",
+        ),
+        confidence=raw.confidence,
+    )
+
+def _normalize_scope_operator(
+    raw: RawScopeOperator,
+    mapping: dict[str, str],
+) -> ScopeOperator:
+    return ScopeOperator(
+        operator_id=f"scope_{raw.temp_id}",
+        operator=ScopeOperatorType(
+            raw.operator.value
+        ),
+        target_id=_require_semantic_mapping(
+            raw.target_id,
+            mapping,
+            owner=(
+                f"RawScopeOperator "
+                f"{raw.temp_id!r}"
+            ),
+        ),
+        confidence=raw.confidence,
+    )
 
 def normalize_interpretation(
     raw: RawInterpretation,
@@ -616,6 +658,24 @@ def normalize_interpretation(
         in raw.semantic_relations
     ]
 
+    semantic_content_links = [
+        _normalize_semantic_content_link(
+            link,
+            semantic_id_map,
+        )
+        for link
+        in raw.semantic_content_links
+    ]
+
+    scope_operators = [
+        _normalize_scope_operator(
+            operator,
+            semantic_id_map,
+        )
+        for operator
+        in raw.scope_operators
+    ]
+
     acts: list[CommunicativeAct] = []
 
     for raw_act in raw.discourse.acts:
@@ -657,6 +717,8 @@ def normalize_interpretation(
         references=references,
         revisions=revisions,
         semantic_relations=semantic_relations,
+        semantic_content_links=semantic_content_links,
+        scope_operators=scope_operators,
         unresolved=list(
             raw.unresolved
         ),

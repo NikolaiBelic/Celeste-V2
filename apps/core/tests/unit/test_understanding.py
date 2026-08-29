@@ -91,7 +91,7 @@ async def test_understanding_converts_raw_event_to_interpretation():
                     participants=[
                         RawParticipant(
                             entity_temp_id="laura",
-                            role="actor",
+                            role="agent",
                         )
                     ],
                 )
@@ -264,7 +264,7 @@ async def test_understanding_preserves_reported_speech_as_attribution():
                     participants=[
                         RawParticipant(
                             entity_temp_id="marta",
-                            role="actor",
+                            role="agent",
                         )
                     ],
                 )
@@ -319,7 +319,7 @@ async def test_understanding_preserves_negated_intention():
                     participants=[
                         RawParticipant(
                             entity_temp_id="user",
-                            role="actor",
+                            role="agent",
                         )
                     ],
                 )
@@ -412,11 +412,13 @@ async def test_understanding_preserves_same_turn_correction():
                     temp_id="madrid",
                     semantic_type="destination",
                     value="Madrid",
+                    participants=[],
                 ),
                 RawState(
                     temp_id="getafe",
                     semantic_type="destination",
                     value="Getafe",
+                    participants=[],
                 ),
             ],
             revisions=[

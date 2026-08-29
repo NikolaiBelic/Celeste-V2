@@ -1,38 +1,1019 @@
 [
-  {"id":"simple_01","category":"simple","text":"Laura vive en Alicante.","expect":{"acts":["assert"],"situation_kinds":["state"],"entity_mentions":["Laura","Alicante"]}},
-  {"id":"simple_02","category":"simple","text":"He adoptado un perro.","expect":{"acts":["assert"],"situation_kinds":["event"],"entity_ids":["user"]}},
-  {"id":"simple_03","category":"simple","text":"Marta abrió la ventana y entró aire frío.","expect":{"acts":["assert"],"min_situations":2,"semantic_relations_any":["cause","consequence"]}},
-  {"id":"simple_04","category":"simple","text":"Pablo llegó antes de que empezara la reunión.","expect":{"acts":["assert"],"min_situations":2,"semantic_relations":["temporal_before"]}},
-  {"id":"negation_01","category":"negation","text":"No trabajo los sábados.","expect":{"acts":["assert"],"polarities":["negative"],"entity_ids":["user"]}},
-  {"id":"negation_02","category":"negation","text":"Marta no está enfadada conmigo.","expect":{"acts":["assert"],"polarities":["negative"],"entity_mentions":["Marta"]}},
-  {"id":"negation_03","category":"negation","text":"Ya no vivo en Madrid.","expect":{"acts":["assert"],"situation_kinds":["transition"],"transitions":["end"],"entity_ids":["user"]}},
-  {"id":"negation_04","category":"negation","text":"Nunca dije que Laura hubiera mentido.","expect":{"acts":["deny"],"polarities":["negative"],"entity_mentions":["Laura"]}},
-  {"id":"belief_01","category":"belief","text":"Creo que Marta está cansada.","expect":{"acts":["assert"],"proposition_modes":["belief"],"entity_ids":["user"],"entity_mentions":["Marta"]}},
-  {"id":"belief_02","category":"belief","text":"Pablo piensa que Laura vive en Sevilla.","expect":{"acts":["assert"],"proposition_modes":["belief"],"entity_mentions":["Pablo","Laura","Sevilla"]}},
-  {"id":"belief_03","category":"belief","text":"Puede que mañana cancelen el concierto.","expect":{"acts":["speculate"],"proposition_modes":["possibility"],"certainties":["uncertain"]}},
-  {"id":"belief_04","category":"belief","text":"En mi opinión, este plan es demasiado arriesgado.","expect":{"acts":["assert"],"proposition_modes":["opinion"],"entity_ids":["user"]}},
-  {"id":"desire_01","category":"desire","text":"Quiero aprender japonés.","expect":{"proposition_modes":["desire"],"entity_ids":["user"],"realities":["hypothetical"]}},
-  {"id":"desire_02","category":"desire","text":"No quiero dejar el trabajo.","expect":{"proposition_modes":["desire"],"proposition_polarities":["negative"],"entity_ids":["user"]}},
-  {"id":"desire_03","category":"desire","text":"Voy a llamar a Laura esta tarde.","expect":{"proposition_modes":["intention"],"entity_ids":["user"],"entity_mentions":["Laura"]}},
-  {"id":"desire_04","category":"desire","text":"Estoy pensando en mudarme, pero todavía no lo he decidido.","expect":{"acts":["speculate"],"proposition_modes":["possibility"],"certainties":["uncertain"]}},
-  {"id":"ambiguity_01","category":"ambiguity","text":"Laura habló con Marta y ella se fue.","expect":{"references":["ella"],"reference_candidates_min":2,"min_situations":2}},
-  {"id":"ambiguity_02","category":"ambiguity","text":"Vi a Alex con su hermano, pero no sé cuál de los dos conducía.","expect":{"min_entities":2,"unresolved_min":1}},
-  {"id":"ambiguity_03","category":"ambiguity","text":"El banco estaba cerrado.","expect":{"acts":["assert"],"unresolved_min":1}},
-  {"id":"ambiguity_04","category":"ambiguity","text":"Quizá fue Ana o quizá fue Elena.","expect":{"acts":["speculate"],"entity_mentions":["Ana","Elena"],"certainties":["uncertain"]}},
-  {"id":"correction_01","category":"correction","text":"Me voy a Madrid... perdón, a Getafe.","expect":{"acts":["correct"],"revisions":["correction"],"entity_mentions":["Madrid","Getafe"]}},
-  {"id":"correction_02","category":"correction","text":"Laura vive en Valencia; no, me he equivocado, vive en Alicante.","expect":{"acts":["correct"],"revisions":["correction"],"entity_mentions":["Laura","Valencia","Alicante"]}},
-  {"id":"correction_03","category":"correction","text":"Dije que vendría el lunes, pero retiro lo dicho.","expect":{"acts":["correct"],"revisions":["retraction"],"entity_ids":["user"]}},
-  {"id":"correction_04","category":"correction","text":"Laura se ha mudado de Madrid a Getafe.","expect":{"acts":["assert"],"situation_kinds":["transition"],"transitions":["change"],"max_revisions":0}},
-  {"id":"reported_01","category":"reported_speech","text":"Laura dijo que Marta vendrá mañana.","expect":{"attributions":["reports"],"entity_mentions":["Laura","Marta"]}},
-  {"id":"reported_02","category":"reported_speech","text":"Pablo asegura que no rompió el jarrón.","expect":{"attributions":["reports"],"polarities":["negative"],"entity_mentions":["Pablo"]}},
-  {"id":"reported_03","category":"reported_speech","text":"Según Ana, Elena ya ha enviado el informe.","expect":{"attributions":["reports"],"entity_mentions":["Ana","Elena"]}},
-  {"id":"reported_04","category":"reported_speech","text":"Marta me contó que quizá deje su trabajo.","expect":{"attributions":["reports"],"entity_mentions":["Marta"],"certainties":["uncertain"]}},
-  {"id":"question_01","category":"question","text":"¿Dónde vive Laura?","expect":{"acts":["ask"],"entity_mentions":["Laura"]}},
-  {"id":"question_02","category":"question","text":"¿Marta está enfadada conmigo?","expect":{"acts":["ask"],"entity_mentions":["Marta"],"entity_ids":["user"]}},
-  {"id":"question_03","category":"question","text":"¿Quién llamó a Pablo ayer?","expect":{"acts":["ask"],"entity_mentions":["Pablo"],"unresolved_min":1}},
-  {"id":"question_04","category":"question","text":"¿Vienes mañana o prefieres quedarte en casa?","expect":{"acts":["ask"],"min_situations":2}},
-  {"id":"request_01","category":"request","text":"Recuérdame llamar a Laura.","expect":{"acts":["request"],"entity_mentions":["Laura"]}},
-  {"id":"request_02","category":"request","text":"Por favor, cierra la ventana.","expect":{"acts":["request"]}},
-  {"id":"request_03","category":"request","text":"¿Puedes buscar una farmacia cercana?","expect":{"acts":["request"]}},
-  {"id":"request_04","category":"request","text":"Dime si Marta confirmó la reserva.","expect":{"acts":["request"],"entity_mentions":["Marta"]}}
+  {
+    "id": "simple_01",
+    "category": "simple",
+    "text": "Laura vive en Alicante.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "situation_kinds": [
+        "state"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "reside",
+          "participants": {
+            "theme": "laura",
+            "location": "alicante"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "simple_02",
+    "category": "simple",
+    "text": "He adoptado un perro.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "situation_kinds": [
+        "event"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "adopt",
+          "participants": {
+            "agent": "user",
+            "patient": "un perro"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "simple_03",
+    "category": "simple",
+    "text": "Marta abrió la ventana y entró aire frío.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "min_situations": 2
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "open",
+          "participants": {
+            "agent": "marta",
+            "patient": "la ventana"
+          }
+        },
+        {
+          "semantic_type": "enter",
+          "participants": {
+            "theme": "aire frío"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "simple_04",
+    "category": "simple",
+    "text": "Pablo llegó antes de que empezara la reunión.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "min_situations": 2,
+      "semantic_relations": [
+        "temporal_before"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "arrive",
+          "participants": {
+            "theme": "pablo"
+          }
+        },
+        {
+          "semantic_type": "start",
+          "participants": {
+            "theme": "la reunión"
+          }
+        }
+      ],
+      "semantic_relations": [
+        {
+          "relation": "temporal_before",
+          "source_situation": "arrive",
+          "target_situation": "start"
+        }
+      ]
+    }
+  },
+  {
+    "id": "negation_01",
+    "category": "negation",
+    "text": "No trabajo los sábados.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "polarities": [
+        "negative"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "work",
+          "participants": {
+            "agent": "user"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "negation_02",
+    "category": "negation",
+    "text": "Marta no está enfadada conmigo.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "polarities": [
+        "negative"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "angry",
+          "participants": {
+            "experiencer": "marta",
+            "target": "user"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "negation_03",
+    "category": "negation",
+    "text": "Ya no vivo en Madrid.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "situation_kinds": [
+        "transition"
+      ],
+      "transitions": [
+        "end"
+      ],
+      "entity_ids": [
+        "user"
+      ],
+      "entity_mentions": [
+        "Madrid"
+      ]
+    }
+  },
+  {
+    "id": "negation_04",
+    "category": "negation",
+    "text": "Nunca dije que Laura hubiera mentido.",
+    "expect": {
+      "acts": [
+        "deny"
+      ],
+      "polarities": [
+        "negative"
+      ]
+    },
+    "graph": {
+      "scope_operators": [
+        {
+          "operator": "negation",
+          "target_situation": {
+            "semantic_type": "say",
+            "participants": {
+              "agent": "user"
+            }
+          }
+        }
+      ],
+      "semantic_content_links": [
+        {
+          "source_situation": {
+            "semantic_type": "say",
+            "participants": {
+              "agent": "user"
+            }
+          },
+          "target_situation": {
+            "semantic_type": "lie",
+            "participants": {
+              "agent": "laura"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "belief_01",
+    "category": "belief",
+    "text": "Creo que Marta está cansada.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "proposition_modes": [
+        "belief"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "tired",
+          "participants": {
+            "experiencer": "marta"
+          }
+        }
+      ],
+      "propositions": [
+        {
+          "mode": "belief",
+          "holder": "user",
+          "target_situation": {
+            "semantic_type": "tired"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "belief_02",
+    "category": "belief",
+    "text": "Pablo piensa que Laura vive en Sevilla.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "proposition_modes": [
+        "belief"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "reside",
+          "participants": {
+            "theme": "laura",
+            "location": "sevilla"
+          }
+        }
+      ],
+      "propositions": [
+        {
+          "mode": "belief",
+          "holder": "pablo",
+          "target_situation": {
+            "semantic_type": "reside"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "belief_03",
+    "category": "belief",
+    "text": "Puede que mañana cancelen el concierto.",
+    "expect": {
+      "acts": [
+        "speculate"
+      ],
+      "proposition_modes": [
+        "possibility"
+      ],
+      "certainties": [
+        "uncertain"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "cancel",
+          "participants": {
+            "patient": "el concierto"
+          }
+        }
+      ],
+      "propositions": [
+        {
+          "mode": "possibility",
+          "target_situation": {
+            "semantic_type": "cancel"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "belief_04",
+    "category": "belief",
+    "text": "En mi opinión, este plan es demasiado arriesgado.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "proposition_modes": [
+        "opinion"
+      ],
+      "entity_ids": [
+        "user"
+      ],
+      "entity_mentions": [
+        "este plan"
+      ]
+    },
+    "graph": {
+      "propositions": [
+        {
+          "mode": "opinion",
+          "holder": "user",
+          "target_situation": {
+            "semantic_type": "risky"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "desire_01",
+    "category": "desire",
+    "text": "Quiero aprender japonés.",
+    "expect": {
+      "proposition_modes": [
+        "desire"
+      ],
+      "entity_ids": [
+        "user"
+      ],
+      "realities": [
+        "hypothetical"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "learn",
+          "participants": {
+            "agent": "user",
+            "theme": "japonés"
+          }
+        }
+      ],
+      "propositions": [
+        {
+          "mode": "desire",
+          "holder": "user",
+          "target_situation": {
+            "semantic_type": "learn"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "desire_02",
+    "category": "desire",
+    "text": "No quiero dejar el trabajo.",
+    "expect": {
+      "proposition_modes": [
+        "desire"
+      ],
+      "proposition_polarities": [
+        "negative"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "quit_job",
+          "participants": {
+            "agent": "user"
+          }
+        }
+      ],
+      "propositions": [
+        {
+          "mode": "desire",
+          "holder": "user",
+          "target_situation": {
+            "semantic_type": "quit_job"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "desire_03",
+    "category": "desire",
+    "text": "Voy a llamar a Laura esta tarde.",
+    "expect": {
+      "proposition_modes": [
+        "intention"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "call",
+          "participants": {
+            "agent": "user",
+            "recipient": "laura"
+          }
+        }
+      ],
+      "propositions": [
+        {
+          "mode": "intention",
+          "holder": "user",
+          "target_situation": {
+            "semantic_type": "call"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "desire_04",
+    "category": "desire",
+    "text": "Estoy pensando en mudarme, pero todavía no lo he decidido.",
+    "expect": {
+      "proposition_modes": [
+        "intention"
+      ],
+      "certainties": [
+        "uncertain"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "move",
+          "participants": {
+            "theme": "user"
+          }
+        }
+      ],
+      "propositions": [
+        {
+          "mode": "intention",
+          "holder": "user",
+          "target_situation": {
+            "semantic_type": "move"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "ambiguity_01",
+    "category": "ambiguity",
+    "text": "Laura habló con Marta y ella se fue.",
+    "expect": {
+      "references": [
+        "ella"
+      ],
+      "reference_candidates_min": 2,
+      "min_situations": 2
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "talk",
+          "participants": {
+            "agent": "laura",
+            "recipient": "marta"
+          }
+        }
+      ],
+      "references": [
+        {
+          "text": "ella",
+          "candidates": [
+            "laura",
+            "marta"
+          ],
+          "used_in_situation": {
+            "semantic_type": "leave",
+            "role": "theme"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "ambiguity_02",
+    "category": "ambiguity",
+    "text": "Vi a Alex con su hermano, pero no sé cuál de los dos conducía.",
+    "expect": {
+      "min_entities": 2,
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "references": [
+        {
+          "text": "cuál de los dos",
+          "candidates": [
+            "Alex",
+            "su hermano"
+          ],
+          "used_in_situation": {
+            "semantic_type": "drive",
+            "role": "agent"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "ambiguity_03",
+    "category": "ambiguity",
+    "text": "El banco estaba cerrado.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "min_unresolved": 1
+    }
+  },
+  {
+    "id": "ambiguity_04",
+    "category": "ambiguity",
+    "text": "Quizá fue Ana o quizá fue Elena.",
+    "expect": {
+      "acts": [
+        "speculate"
+      ],
+      "entity_mentions": [
+        "Ana",
+        "Elena"
+      ],
+      "certainties": [
+        "uncertain"
+      ]
+    }
+  },
+  {
+    "id": "correction_01",
+    "category": "correction",
+    "text": "Me voy a Madrid... perdón, a Getafe.",
+    "expect": {
+      "acts": [
+        "correct"
+      ],
+      "revisions": [
+        "correction"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "move",
+          "participants": {
+            "theme": "user",
+            "destination": "madrid"
+          }
+        },
+        {
+          "semantic_type": "move",
+          "participants": {
+            "theme": "user",
+            "destination": "getafe"
+          }
+        }
+      ],
+      "revisions": [
+        {
+          "revision": "correction",
+          "target_situation": "move",
+          "replacement_situation": "move"
+        }
+      ]
+    }
+  },
+  {
+    "id": "correction_02",
+    "category": "correction",
+    "text": "Laura vive en Valencia; no, me he equivocado, vive en Alicante.",
+    "expect": {
+      "acts": [
+        "correct"
+      ],
+      "revisions": [
+        "correction"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "reside",
+          "participants": {
+            "theme": "laura",
+            "location": "valencia"
+          }
+        },
+        {
+          "semantic_type": "reside",
+          "participants": {
+            "theme": "laura",
+            "location": "alicante"
+          }
+        }
+      ],
+      "revisions": [
+        {
+          "revision": "correction",
+          "target_situation": "reside",
+          "replacement_situation": "reside"
+        }
+      ]
+    }
+  },
+  {
+    "id": "correction_03",
+    "category": "correction",
+    "text": "Dije que vendría el lunes, pero retiro lo dicho.",
+    "expect": {
+      "revisions": [
+        "retraction"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "come",
+          "participants": {
+            "theme": "user"
+          }
+        }
+      ],
+      "revisions": [
+        {
+          "revision": "retraction",
+          "target_situation": "come"
+        }
+      ]
+    }
+  },
+  {
+    "id": "correction_04",
+    "category": "correction",
+    "text": "Laura se ha mudado de Madrid a Getafe.",
+    "expect": {
+      "acts": [
+        "assert"
+      ],
+      "situation_kinds": [
+        "transition"
+      ],
+      "max_revisions": 0
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "move",
+          "participants": {
+            "theme": "laura",
+            "source": "madrid",
+            "destination": "getafe"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "reported_01",
+    "category": "reported_speech",
+    "text": "Laura dijo que Marta vendrá mañana.",
+    "expect": {
+      "attributions": [
+        "reports"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "come",
+          "participants": {
+            "theme": "marta"
+          }
+        }
+      ],
+      "attributions": [
+        {
+          "relation": "reports",
+          "source_entity": "laura",
+          "target_situation": "come"
+        }
+      ]
+    }
+  },
+  {
+    "id": "reported_02",
+    "category": "reported_speech",
+    "text": "Pablo asegura que no rompió el jarrón.",
+    "expect": {
+      "attributions": [
+        "reports"
+      ],
+      "polarities": [
+        "negative"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "break",
+          "participants": {
+            "agent": "pablo",
+            "patient": "el jarrón"
+          }
+        }
+      ],
+      "attributions": [
+        {
+          "relation": "reports",
+          "source_entity": "pablo",
+          "target_situation": "break"
+        }
+      ]
+    }
+  },
+  {
+    "id": "reported_03",
+    "category": "reported_speech",
+    "text": "Según Ana, Elena ya ha enviado el informe.",
+    "expect": {
+      "attributions": [
+        "reports"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "send",
+          "participants": {
+            "agent": "elena",
+            "theme": "el informe"
+          }
+        }
+      ],
+      "attributions": [
+        {
+          "relation": "reports",
+          "source_entity": "ana",
+          "target_situation": "send"
+        }
+      ]
+    }
+  },
+  {
+    "id": "reported_04",
+    "category": "reported_speech",
+    "text": "Marta me contó que quizá deje su trabajo.",
+    "expect": {
+      "attributions": [
+        "reports"
+      ],
+      "certainties": [
+        "uncertain"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "quit_job",
+          "participants": {
+            "agent": "marta"
+          }
+        }
+      ],
+      "propositions": [
+        {
+          "mode": "possibility",
+          "holder": "marta",
+          "target_situation": {
+            "semantic_type": "quit_job"
+          }
+        }
+      ],
+      "attributions": [
+        {
+          "relation": "reports",
+          "source_entity": "marta",
+          "target_proposition": "possibility"
+        }
+      ]
+    }
+  },
+  {
+    "id": "question_01",
+    "category": "question",
+    "text": "¿Dónde vive Laura?",
+    "expect": {
+      "acts": [
+        "ask"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "reside",
+          "participants": {
+            "theme": "laura"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "question_02",
+    "category": "question",
+    "text": "¿Marta está enfadada conmigo?",
+    "expect": {
+      "acts": [
+        "ask"
+      ],
+      "entity_ids": [
+        "user"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "angry",
+          "participants": {
+            "experiencer": "marta",
+            "target": "user"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "question_03",
+    "category": "question",
+    "text": "¿Quién llamó a Pablo ayer?",
+    "expect": {
+      "acts": [
+        "ask"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "call",
+          "participants": {
+            "recipient": "pablo"
+          }
+        }
+      ],
+      "references": [
+        {
+          "text": "quién",
+          "candidates": [],
+          "used_in_situation": {
+            "semantic_type": "call",
+            "role": "agent"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "question_04",
+    "category": "question",
+    "text": "¿Vienes mañana o prefieres quedarte en casa?",
+    "expect": {
+      "acts": [
+        "ask"
+      ],
+      "min_situations": 2
+    }
+  },
+  {
+    "id": "request_01",
+    "category": "request",
+    "text": "Recuérdame llamar a Laura.",
+    "expect": {
+      "acts": [
+        "request"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "call",
+          "participants": {
+            "agent": "user",
+            "recipient": "laura"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "request_02",
+    "category": "request",
+    "text": "Por favor, cierra la ventana.",
+    "expect": {
+      "acts": [
+        "request"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "close",
+          "participants": {
+            "patient": "la ventana"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "request_03",
+    "category": "request",
+    "text": "¿Puedes buscar una farmacia cercana?",
+    "expect": {
+      "acts": [
+        "request"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "search",
+          "participants": {
+            "target": "una farmacia cercana"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "request_04",
+    "category": "request",
+    "text": "Dime si Marta confirmó la reserva.",
+    "expect": {
+      "acts": [
+        "request"
+      ]
+    },
+    "graph": {
+      "situations": [
+        {
+          "semantic_type": "confirm",
+          "participants": {
+            "agent": "marta",
+            "theme": "la reserva"
+          }
+        }
+      ]
+    }
+  }
 ]

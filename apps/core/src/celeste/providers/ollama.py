@@ -50,10 +50,26 @@ class OllamaProvider(LLMProvider):
             think=self.think,
             options={
                 "temperature": self.temperature,
+                "num_ctx": 16384,
+                "num_predict": 4096,
+            },
+        )
+
+        print(
+            "OLLAMA META:",
+            {
+                "done": response.done,
+                "done_reason": response.done_reason,
+                "prompt_eval_count": response.prompt_eval_count,
+                "eval_count": response.eval_count,
             },
         )
 
         content = response.message.content
+
+        print("\n--- OLLAMA RAW OUTPUT ---")
+        print(content)
+        print("--- END RAW OUTPUT ---\n")
 
         if not content:
             raise RuntimeError(
@@ -94,10 +110,26 @@ class OllamaProvider(LLMProvider):
                 think=self.think,
                 options={
                     "temperature": 0.0,
+                    "num_ctx": 16384,
+                    "num_predict": 4096,
+                },
+            )
+
+            print(
+                "OLLAMA REPAIR META:",
+                {
+                    "done": repair_response.done,
+                    "done_reason": repair_response.done_reason,
+                    "prompt_eval_count": repair_response.prompt_eval_count,
+                    "eval_count": repair_response.eval_count,
                 },
             )
 
             repaired_content = repair_response.message.content
+
+            print("\n--- OLLAMA REPAIR OUTPUT ---")
+            print(repaired_content)
+            print("--- END REPAIR OUTPUT ---\n")
 
             if not repaired_content:
                 raise RuntimeError(

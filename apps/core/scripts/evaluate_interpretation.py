@@ -11,6 +11,7 @@ from typing import Any
 from celeste.cognition.raw_interpretation import RawInterpretation
 from celeste.cognition.understanding import Understanding
 from celeste.providers import DEFAULT_MODELS, create_provider
+from celeste.cognition.interpretation_evaluation import evaluate_graph
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,10 +74,13 @@ def evaluate(raw: RawInterpretation, expected: dict[str, Any]) -> list[str]:
         failures.append(f"references: no item has {candidate_minimum} candidates")
     return failures
 
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate Understanding with a real model.")
-    parser.add_argument("--provider", choices=sorted(DEFAULT_MODELS), required=True)
+    parser.add_argument(
+        "--provider",
+        choices=["gemini", "ollama"],
+        default="ollama",
+    )
     parser.add_argument("--model")
     parser.add_argument("--corpus", type=Path, default=DEFAULT_CORPUS)
     parser.add_argument("--category")
@@ -84,7 +88,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
-
 
 async def main() -> None:
     args = parse_args()
@@ -115,7 +118,12 @@ async def main() -> None:
                 raw = RawInterpretation.model_validate(previous[case["id"]]["raw"])
             else:
                 raw = await understanding.interpret_raw(case["text"])
+                print("DEBUG TEXT:", repr(case["text"]))
             failures = evaluate(raw, case["expect"])
+
+            graph_expected = case.get("graph")
+            if graph_expected:
+                failures.extend(evaluate_graph(raw, graph_expected))
             result = {**case, "status": "failed" if failures else "passed",
                       "passed": not failures, "failures": failures,
                       "raw": raw.model_dump(mode="json")}

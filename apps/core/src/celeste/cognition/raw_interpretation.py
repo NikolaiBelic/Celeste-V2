@@ -74,26 +74,24 @@ class RawSemanticRelationType(StrEnum):
     PRESUPPOSES = "presupposes"
     CONTRADICTS = "contradicts"
 
+class RawScopeOperatorType(StrEnum):
+    NEGATION = "negation"
+    EXCLUSIVITY = "exclusivity"
 
-class RawEntity(BaseModel):
-    temp_id: str
-
-    mention: str
-
-    canonical_name: str | None = None
-
-    semantic_type: str | None = None
-
-    identity_hint: str | None = None
-
-    confidence: float = Field(
-        default=1.0,
-        ge=0.0,
-        le=1.0,
-    )
+class RawParticipantRole(StrEnum):
+    AGENT = "agent"
+    EXPERIENCER = "experiencer"
+    PATIENT = "patient"
+    THEME = "theme"
+    RECIPIENT = "recipient"
+    TARGET = "target"
+    SOURCE = "source"
+    DESTINATION = "destination"
+    LOCATION = "location"
+    INSTRUMENT = "instrument"
 
 class RawParticipant(BaseModel):
-    role: str
+    role: RawParticipantRole
 
     entity_temp_id: str | None = None
     reference_temp_id: str | None = None
@@ -115,6 +113,23 @@ class RawParticipant(BaseModel):
             )
 
         return self
+
+class RawEntity(BaseModel):
+    temp_id: str
+
+    mention: str
+
+    canonical_name: str | None = None
+
+    semantic_type: str | None = None
+
+    identity_hint: str | None = None
+
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+    )
 
 class RawTemporalMeaning(BaseModel):
     frame: Literal[
@@ -157,9 +172,7 @@ class RawSituation(BaseModel):
         "cancel",
     ] | None = None
 
-    participants: list[RawParticipant] = Field(
-        default_factory=list
-    )
+    participants: list[RawParticipant]
 
     value: str | int | float | bool | None = None
 
@@ -181,15 +194,31 @@ class RawSituation(BaseModel):
         le=1.0,
     )
 
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls,
+        core_schema,
+        handler,
+    ):
+        """
+        Require critical semantic decisions from the LLM while
+        keeping Python construction forgiving through defaults.
+        """
+        schema = handler(core_schema)
+        required = schema.setdefault("required", [])
+
+        for field_name in (
+            "polarity",
+            "reality",
+            "certainty",
+        ):
+            if field_name not in required:
+                required.append(field_name)
+
+        return schema
+
     @model_validator(mode="after")
     def infer_kind(self) -> "RawSituation":
-        if (
-            self.kind == RawSituationKind.TRANSITION
-            and self.transition is None
-            and self.semantic_state is None
-        ):
-            self.kind = RawSituationKind.EVENT
-
         if self.kind is not None:
             return self
 
@@ -233,6 +262,28 @@ class RawProposition(BaseModel):
         ge=0.0,
         le=1.0,
     )
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls,
+        core_schema,
+        handler,
+    ):
+        """
+        Require critical semantic decisions from the LLM while
+        keeping Python construction forgiving through defaults.
+        """
+        schema = handler(core_schema)
+        required = schema.setdefault("required", [])
+
+        for field_name in (
+            "polarity",
+            "certainty",
+        ):
+            if field_name not in required:
+                required.append(field_name)
+
+        return schema
 
 
 class RawAttribution(BaseModel):
@@ -298,6 +349,29 @@ class RawSemanticRelation(BaseModel):
         le=1.0,
     )
 
+class RawSemanticContentLink(BaseModel):
+    source_id: str
+
+    target_id: str
+
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+    )
+
+class RawScopeOperator(BaseModel):
+    temp_id: str
+
+    operator: RawScopeOperatorType
+
+    target_id: str
+
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+    )
 
 class RawDiscourseMeaning(BaseModel):
     acts: list[RawCommunicativeAct] = Field(
@@ -358,6 +432,18 @@ class RawInterpretation(BaseModel):
 
     semantic_relations: list[
         RawSemanticRelation
+    ] = Field(
+        default_factory=list
+    )
+
+    semantic_content_links: list[
+        RawSemanticContentLink
+    ] = Field(
+        default_factory=list
+    )
+
+    scope_operators: list[
+        RawScopeOperator
     ] = Field(
         default_factory=list
     )
@@ -563,6 +649,15 @@ class RawInterpretation(BaseModel):
                 if entity_temp_id == "user":
                     user_is_referenced = True
 
+                # A participant with no target carries no usable
+                # semantic information. Drop it instead of inventing
+                # an entity or reference to satisfy the graph.
+                if (
+                    entity_temp_id is None
+                    and reference_temp_id is None
+                ):
+                    continue
+
                 repaired_participants.append(
                     participant
                 )
@@ -701,6 +796,9 @@ class RawInterpretation(BaseModel):
         for revision in self.revisions:
             register_node(revision.temp_id)
 
+        for operator in self.scope_operators:
+            register_node(operator.temp_id)
+
         for situation in self.situations:
             for participant in situation.participants:
                 if participant.entity_temp_id is not None:
@@ -825,6 +923,29 @@ class RawInterpretation(BaseModel):
                     "Raw semantic relation references "
                     "unknown target "
                     f"{relation.target_id!r}"
+                )
+
+        for link in self.semantic_content_links:
+            if link.source_id not in semantic_ids:
+                raise ValueError(
+                    "Raw semantic content link references "
+                    "unknown source "
+                    f"{link.source_id!r}"
+                )
+
+            if link.target_id not in semantic_ids:
+                raise ValueError(
+                    "Raw semantic content link references "
+                    "unknown target "
+                    f"{link.target_id!r}"
+                )
+
+        for operator in self.scope_operators:
+            if operator.target_id not in semantic_ids:
+                raise ValueError(
+                    "Raw scope operator references "
+                    "unknown semantic target "
+                    f"{operator.target_id!r}"
                 )
 
         return self

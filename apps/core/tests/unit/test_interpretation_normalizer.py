@@ -1,6 +1,7 @@
 import pytest
 
 from pydantic import ValidationError
+from celeste.cognition.interpretation import ScopeOperatorType
 
 from celeste.cognition.interpretation import (
     Polarity,
@@ -8,6 +9,7 @@ from celeste.cognition.interpretation import (
     ReferenceStatus,
     SituationKind,
     TransitionKind,
+    Transition
 )
 
 from celeste.cognition.interpretation_normalizer import (
@@ -82,7 +84,7 @@ def test_raw_event_becomes_semantic_event():
                 participants=[
                     RawParticipant(
                         entity_temp_id="p1",
-                        role="actor",
+                        role="agent",
                     )
                 ],
             )
@@ -184,7 +186,7 @@ def test_raw_negated_intention_preserves_polarity():
                 participants=[
                     RawParticipant(
                         entity_temp_id="user",
-                        role="employee",
+                        role="theme",
                     )
                 ],
             )
@@ -229,6 +231,7 @@ def test_raw_attribution_targets_normalized_node():
             RawEvent(
                 temp_id="rain",
                 semantic_type="rain",
+                participants=[],
             )
         ],
         attributions=[
@@ -338,11 +341,13 @@ def test_raw_correction_maps_both_semantic_nodes():
                 temp_id="madrid",
                 semantic_type="destination",
                 value="Madrid",
+                participants=[],
             ),
             RawState(
                 temp_id="getafe",
                 semantic_type="destination",
                 value="Getafe",
+                participants=[],
             ),
         ],
         revisions=[
@@ -376,10 +381,12 @@ def test_raw_semantic_relation_maps_ids():
             RawEvent(
                 temp_id="rain",
                 semantic_type="rain",
+                participants=[],
             ),
             RawEvent(
                 temp_id="stay_home",
                 semantic_type="stay_home",
+                participants=[],
             ),
         ],
         semantic_relations=[
@@ -415,10 +422,12 @@ def test_duplicate_raw_semantic_ids_are_rejected():
                 RawEvent(
                     temp_id="same",
                     semantic_type="rain",
+                    participants=[],
                 ),
                 RawState(
                     temp_id="same",
                     semantic_type="weather",
+                    participants=[],
                 ),
             ]
         )
@@ -440,6 +449,7 @@ def test_raw_temp_id_is_unique_across_reference_and_situation():
                 RawEvent(
                     temp_id="same",
                     semantic_type="leave",
+                    participants=[],
                 )
             ],
         )
@@ -462,6 +472,7 @@ def test_raw_temp_id_is_unique_across_situation_and_proposition():
                 RawEvent(
                     temp_id="same",
                     semantic_type="leave",
+                    participants=[],
                 )
             ],
             propositions=[
@@ -485,6 +496,7 @@ def test_raw_temp_id_is_unique_for_revisions_too():
                 RawEvent(
                     temp_id="event1",
                     semantic_type="leave",
+                    participants=[],
                 )
             ],
             revisions=[
@@ -505,7 +517,7 @@ def test_raw_implicit_user_is_created_when_referenced():
                 participants=[
                     RawParticipant(
                         entity_temp_id="user",
-                        role="actor",
+                        role="agent",
                     )
                 ],
             )
@@ -562,7 +574,7 @@ def test_raw_ambiguous_reference_can_be_situation_participant():
                 participants=[
                     RawParticipant(
                         reference_temp_id="ella",
-                        role="actor",
+                        role="agent",
                     )
                 ],
             )
@@ -606,7 +618,7 @@ def test_raw_participant_reference_field_is_repaired_when_id_is_entity():
                     "participants": [
                         {
                             "reference_temp_id": "laura",
-                            "role": "actor",
+                            "role": "agent",
                         }
                     ],
                 }
@@ -662,7 +674,7 @@ def test_raw_participant_entity_field_is_repaired_when_id_is_reference():
                     "participants": [
                         {
                             "entity_temp_id": "ref1",
-                            "role": "actor",
+                            "role": "agent",
                         }
                     ],
                 }
@@ -685,30 +697,156 @@ def test_raw_participant_entity_field_is_repaired_when_id_is_reference():
         is None
     )
 
-def test_incomplete_raw_transition_is_degraded_to_event():
+def test_raw_participant_without_target_is_dropped() -> None:
+    raw = RawInterpretation.model_validate(
+        {
+            "situations": [
+                {
+                    "temp_id": "event1",
+                    "kind": "event",
+                    "semantic_type": "event",
+                    "participants": [
+                        {
+                            "role": "agent",
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert raw.situations[0].participants == []
+
+def test_raw_situation_preserves_explicit_transition_kind() -> None:
+    situation = RawSituation.model_validate(
+        {
+            "temp_id": "situation1",
+            "kind": "transition",
+            "semantic_type": "change_state",
+            "participants": [],
+            "polarity": "positive",
+            "reality": "actual",
+            "certainty": "asserted",
+        }
+    )
+
+    assert situation.kind == RawSituationKind.TRANSITION
+    assert situation.transition is None
+
+def test_raw_situation_infers_transition_from_transition_type() -> None:
+    situation = RawSituation.model_validate(
+        {
+            "temp_id": "situation1",
+            "semantic_type": "change_state",
+            "transition": "change",
+            "participants": [],
+            "polarity": "positive",
+            "reality": "actual",
+            "certainty": "asserted",
+        }
+    )
+
+    assert situation.kind == RawSituationKind.TRANSITION
+    assert situation.transition == "change"
+
+def test_partial_raw_transition_remains_transition() -> None:
     raw = RawInterpretation(
         situations=[
             RawSituation(
-                temp_id="leave",
+                temp_id="move",
                 kind=RawSituationKind.TRANSITION,
-                semantic_type="leave_job",
+                semantic_type="move",
+                participants=[],
             )
         ]
     )
 
-    assert (
-        raw.situations[0].kind
-        == RawSituationKind.EVENT
+    interpretation = normalize_interpretation(raw)
+
+    assert len(interpretation.situations) == 1
+
+    situation = interpretation.situations[0]
+
+    assert isinstance(situation, Transition)
+    assert situation.kind == SituationKind.TRANSITION
+    assert situation.transition is None
+    assert situation.semantic_state is None
+
+def test_normalizes_scope_operator() -> None:
+    raw = RawInterpretation.model_validate(
+        {
+            "situations": [
+                {
+                    "temp_id": "say1",
+                    "kind": "event",
+                    "semantic_type": "say",
+                    "participants": [],
+                    "polarity": "negative",
+                    "reality": "actual",
+                    "certainty": "asserted",
+                }
+            ],
+            "scope_operators": [
+                {
+                    "temp_id": "scope1",
+                    "operator": "negation",
+                    "target_id": "say1",
+                }
+            ],
+        }
     )
 
-    result = normalize_interpretation(raw)
+    interpretation = normalize_interpretation(raw)
 
-    assert (
-        result.situations[0].kind
-        == SituationKind.EVENT
+    assert len(interpretation.scope_operators) == 1
+
+    operator = interpretation.scope_operators[0]
+
+    assert operator.operator_id == "scope_scope1"
+    assert operator.operator == ScopeOperatorType.NEGATION
+    assert operator.target_id == "event_say1"
+
+def test_normalizer_preserves_semantic_content_link() -> None:
+    raw = RawInterpretation.model_validate(
+        {
+            "situations": [
+                {
+                    "temp_id": "say1",
+                    "kind": "event",
+                    "semantic_type": "say",
+                    "participants": [],
+                    "polarity": "negative",
+                    "reality": "actual",
+                    "certainty": "asserted",
+                },
+                {
+                    "temp_id": "lie1",
+                    "kind": "event",
+                    "semantic_type": "lie",
+                    "participants": [],
+                    "polarity": "positive",
+                    "reality": "hypothetical",
+                    "certainty": "uncertain",
+                },
+            ],
+            "semantic_content_links": [
+                {
+                    "source_id": "say1",
+                    "target_id": "lie1",
+                    "confidence": 0.95,
+                }
+            ],
+        }
     )
 
-    assert (
-        result.situations[0].semantic_type
-        == "leave_job"
-    )
+    interpretation = normalize_interpretation(raw)
+
+    assert len(
+        interpretation.semantic_content_links
+    ) == 1
+
+    link = interpretation.semantic_content_links[0]
+
+    assert link.source_id == "event_say1"
+    assert link.target_id == "event_lie1"
+    assert link.confidence == 0.95

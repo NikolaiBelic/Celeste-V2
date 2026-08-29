@@ -1,6 +1,8 @@
 from pydantic import ValidationError
 import pytest
 
+from celeste.cognition.raw_interpretation import RawInterpretation
+
 from celeste.cognition.interpretation import (
     AlternativeGroup,
     Attribution,
@@ -39,6 +41,7 @@ from celeste.cognition.interpretation import (
     SemanticRelation,
     SemanticRelationType,
     SituationContent,
+    SemanticContentLink,
     SituationKind,
     State,
     TemporalMeaning,
@@ -213,11 +216,11 @@ def test_breakup_can_be_represented_as_transition():
         participants=[
             Participant(
                 entity_id=user.entity_id,
-                role="partner",
+                role="theme",
             ),
             Participant(
                 entity_id=laura.entity_id,
-                role="partner",
+                role="theme",
             ),
         ],
         temporal=TemporalMeaning(
@@ -243,7 +246,7 @@ def test_participant_must_reference_existing_entity():
         participants=[
             Participant(
                 entity_id="missing_person",
-                role="visitor",
+                role="theme",
             )
         ],
     )
@@ -262,8 +265,8 @@ def test_intention_can_contain_transition_without_completing_it():
         transition=TransitionKind.END,
         semantic_state="romantic_relationship",
         participants=[
-            Participant(entity_id=user.entity_id, role="partner"),
-            Participant(entity_id=laura.entity_id, role="partner"),
+            Participant(entity_id=user.entity_id, role="theme"),
+            Participant(entity_id=laura.entity_id, role="theme"),
         ],
         temporal=TemporalMeaning(frame=TimeFrame.FUTURE),
     )
@@ -295,8 +298,8 @@ def test_argument_can_be_event_without_relationship_change():
         semantic_id="argument_1",
         semantic_type="interpersonal_conflict",
         participants=[
-            Participant(entity_id=user.entity_id, role="participant"),
-            Participant(entity_id=mother.entity_id, role="participant"),
+            Participant(entity_id=user.entity_id, role="theme"),
+            Participant(entity_id=mother.entity_id, role="theme"),
         ],
     )
 
@@ -363,7 +366,7 @@ def test_negation_is_separate_from_certainty():
     coffee = thing(
         "entity_coffee",
         semantic_type="thing",
-        name="café",
+        name="cafÃƒÂ©",
     )
 
     preference = Proposition(
@@ -399,7 +402,7 @@ def test_semantic_value_entity_reference_must_exist():
         semantic_id="residence_1",
         semantic_type="residence",
         participants=[
-            Participant(entity_id=user.entity_id, role="resident"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
         value=ref("missing_place"),
     )
@@ -420,8 +423,8 @@ def test_desire_does_not_create_real_world_state():
         semantic_id="ownership_1",
         semantic_type="ownership",
         participants=[
-            Participant(entity_id=user.entity_id, role="owner"),
-            Participant(entity_id=dog.entity_id, role="owned"),
+            Participant(entity_id=user.entity_id, role="theme"),
+            Participant(entity_id=dog.entity_id, role="theme"),
         ],
     )
 
@@ -451,7 +454,7 @@ def test_real_move_can_preserve_previous_and_new_state():
         transition=TransitionKind.CHANGE,
         semantic_state="residence",
         participants=[
-            Participant(entity_id=laura.entity_id, role="resident"),
+            Participant(entity_id=laura.entity_id, role="theme"),
         ],
         previous_value=ref(madrid.entity_id),
         new_value=ref(getafe.entity_id),
@@ -476,8 +479,8 @@ def test_reconciliation_can_resume_previous_state():
         transition=TransitionKind.RESUME,
         semantic_state="romantic_relationship",
         participants=[
-            Participant(entity_id=user.entity_id, role="partner"),
-            Participant(entity_id=laura.entity_id, role="partner"),
+            Participant(entity_id=user.entity_id, role="theme"),
+            Participant(entity_id=laura.entity_id, role="theme"),
         ],
     )
 
@@ -498,7 +501,7 @@ def test_possibility_about_future_event_is_not_external_event():
         semantic_id="visit_1",
         semantic_type="visit",
         participants=[
-            Participant(entity_id=laura.entity_id, role="visitor"),
+            Participant(entity_id=laura.entity_id, role="theme"),
         ],
         temporal=TemporalMeaning(frame=TimeFrame.FUTURE),
         certainty=Certainty.UNCERTAIN,
@@ -525,7 +528,7 @@ def test_question_is_distinct_from_assertion():
     interpretation = Interpretation(
         discourse=DiscourseMeaning(
             acts=[CommunicativeAct.ASK],
-            literal_meaning="Laura viene mañana",
+            literal_meaning="Laura viene maÃƒÂ±ana",
         )
     )
 
@@ -578,7 +581,7 @@ def test_literal_and_intended_meaning_can_differ():
     interpretation = Interpretation(
         discourse=DiscourseMeaning(
             acts=[CommunicativeAct.EXPRESS],
-            literal_meaning="Estoy muerto de sueño.",
+            literal_meaning="Estoy muerto de sueÃƒÂ±o.",
             intended_meaning="Estoy muy cansado.",
             intended_meaning_confidence=0.98,
         )
@@ -599,8 +602,8 @@ def test_meanings_can_be_connected_by_reason():
         semantic_id="argument_1",
         semantic_type="interpersonal_conflict",
         participants=[
-            Participant(entity_id=user.entity_id, role="participant"),
-            Participant(entity_id=mother.entity_id, role="participant"),
+            Participant(entity_id=user.entity_id, role="theme"),
+            Participant(entity_id=mother.entity_id, role="theme"),
         ],
     )
 
@@ -640,7 +643,7 @@ def test_negated_intention_is_not_completed_transition():
         transition=TransitionKind.END,
         semantic_state="employment",
         participants=[
-            Participant(entity_id=user.entity_id, role="employee"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
     )
 
@@ -671,7 +674,7 @@ def test_contrast_can_connect_two_mental_attitudes():
         transition=TransitionKind.END,
         semantic_state="employment",
         participants=[
-            Participant(entity_id=user.entity_id, role="employee"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
     )
 
@@ -721,7 +724,7 @@ def test_condition_can_connect_possible_meanings():
         semantic_id="not_go_1",
         semantic_type="go",
         participants=[
-            Participant(entity_id=user.entity_id, role="traveler"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
         polarity=Polarity.NEGATIVE,
         certainty=Certainty.UNCERTAIN,
@@ -938,7 +941,7 @@ def test_double_negation_preserves_scopes():
         semantic_id="laura_comes_1",
         semantic_type="come",
         participants=[
-            Participant(entity_id=laura.entity_id, role="actor"),
+            Participant(entity_id=laura.entity_id, role="theme"),
         ],
     )
 
@@ -985,7 +988,7 @@ def test_nested_mental_attitudes_preserve_holders():
         semantic_id="user_leaving_1",
         semantic_type="leave",
         participants=[
-            Participant(entity_id=user.entity_id, role="actor"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
     )
 
@@ -1151,7 +1154,7 @@ def test_explicit_or_preserves_alternative_group():
         semantic_id="laura_comes_1",
         semantic_type="come",
         participants=[
-            Participant(entity_id=laura.entity_id, role="actor"),
+            Participant(entity_id=laura.entity_id, role="theme"),
         ],
     )
 
@@ -1159,7 +1162,7 @@ def test_explicit_or_preserves_alternative_group():
         semantic_id="marta_comes_1",
         semantic_type="come",
         participants=[
-            Participant(entity_id=marta.entity_id, role="actor"),
+            Participant(entity_id=marta.entity_id, role="theme"),
         ],
     )
 
@@ -1330,7 +1333,7 @@ def test_stopping_state_can_presuppose_previous_state():
         semantic_id="previous_smoking_1",
         semantic_type="smoking",
         participants=[
-            Participant(entity_id=user.entity_id, role="actor"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
         value=True,
         certainty=Certainty.INFERRED,
@@ -1341,7 +1344,7 @@ def test_stopping_state_can_presuppose_previous_state():
         transition=TransitionKind.END,
         semantic_state="smoking",
         participants=[
-            Participant(entity_id=user.entity_id, role="actor"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
     )
 
@@ -1368,7 +1371,7 @@ def test_factive_emotion_can_presuppose_event():
         semantic_id="went_1",
         semantic_type="go",
         participants=[
-            Participant(entity_id=user.entity_id, role="actor"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
         certainty=Certainty.INFERRED,
     )
@@ -1407,8 +1410,8 @@ def test_counterfactual_does_not_become_actual_world_fact():
         semantic_id="accept_job_1",
         semantic_type="accept_job",
         participants=[
-            Participant(entity_id=user.entity_id, role="actor"),
-            Participant(entity_id=job.entity_id, role="object"),
+            Participant(entity_id=user.entity_id, role="agent"),
+            Participant(entity_id=job.entity_id, role="patient"),
         ],
         reality=RealityStatus.COUNTERFACTUAL,
     )
@@ -1417,7 +1420,7 @@ def test_counterfactual_does_not_become_actual_world_fact():
         semantic_id="live_madrid_1",
         semantic_type="residence",
         participants=[
-            Participant(entity_id=user.entity_id, role="resident"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
         value=ref(madrid.entity_id),
         reality=RealityStatus.COUNTERFACTUAL,
@@ -1458,7 +1461,7 @@ def test_figurative_expression_does_not_create_literal_death():
         entities=[user],
         discourse=DiscourseMeaning(
             acts=[CommunicativeAct.EXPRESS],
-            literal_meaning="Estoy muerto de sueño.",
+            literal_meaning="Estoy muerto de sueÃƒÂ±o.",
             intended_meaning="Estoy muy cansado.",
             intended_meaning_confidence=0.98,
         ),
@@ -1481,7 +1484,7 @@ def test_same_turn_correction_can_replace_previous_content():
         semantic_id="destination_madrid_1",
         semantic_type="destination",
         participants=[
-            Participant(entity_id=user.entity_id, role="traveler"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
         value=ref(madrid.entity_id),
     )
@@ -1490,7 +1493,7 @@ def test_same_turn_correction_can_replace_previous_content():
         semantic_id="destination_getafe_1",
         semantic_type="destination",
         participants=[
-            Participant(entity_id=user.entity_id, role="traveler"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
         value=ref(getafe.entity_id),
     )
@@ -1520,7 +1523,7 @@ def test_same_turn_intention_can_be_retracted():
         transition=TransitionKind.END,
         semantic_state="employment",
         participants=[
-            Participant(entity_id=user.entity_id, role="employee"),
+            Participant(entity_id=user.entity_id, role="theme"),
         ],
     )
 
@@ -1592,7 +1595,7 @@ def test_internal_contradiction_can_be_preserved():
         semantic_id="laura_home_positive_1",
         semantic_type="location",
         participants=[
-            Participant(entity_id=laura.entity_id, role="located_entity"),
+            Participant(entity_id=laura.entity_id, role="theme"),
         ],
         value="home",
     )
@@ -1601,7 +1604,7 @@ def test_internal_contradiction_can_be_preserved():
         semantic_id="laura_home_negative_1",
         semantic_type="location",
         participants=[
-            Participant(entity_id=laura.entity_id, role="located_entity"),
+            Participant(entity_id=laura.entity_id, role="theme"),
         ],
         value="home",
         polarity=Polarity.NEGATIVE,
@@ -1635,7 +1638,7 @@ def test_ellipsis_can_inherit_previous_event_structure():
         semantic_id="fernando_goes_1",
         semantic_type="go",
         participants=[
-            Participant(entity_id=fernando.entity_id, role="traveler"),
+            Participant(entity_id=fernando.entity_id, role="theme"),
             Participant(entity_id=bar.entity_id, role="destination"),
         ],
     )
@@ -1644,7 +1647,7 @@ def test_ellipsis_can_inherit_previous_event_structure():
         semantic_id="marta_goes_1",
         semantic_type="go",
         participants=[
-            Participant(entity_id=marta.entity_id, role="traveler"),
+            Participant(entity_id=marta.entity_id, role="theme"),
             Participant(entity_id=bar.entity_id, role="destination"),
         ],
     )
@@ -1655,7 +1658,7 @@ def test_ellipsis_can_inherit_previous_event_structure():
         ellipsis_resolutions=[
             EllipsisResolution(
                 ellipsis_id="ellipsis_1",
-                text="también",
+                text="tambiÃƒÂ©n",
                 antecedent_ids=["fernando_goes_1"],
                 resolved_semantic_id="marta_goes_1",
                 status=ReferenceStatus.RESOLVED,
@@ -1675,7 +1678,7 @@ def test_ellipsis_can_remain_unresolved():
         ellipsis_resolutions=[
             EllipsisResolution(
                 ellipsis_id="ellipsis_1",
-                text="también",
+                text="tambiÃƒÂ©n",
                 status=ReferenceStatus.UNRESOLVED,
             )
         ]
@@ -1869,7 +1872,7 @@ def test_participant_can_reference_ambiguous_discourse_reference():
         participants=[
             Participant(
                 reference_id="reference_ella_1",
-                role="actor",
+                role="theme",
             )
         ],
     )
@@ -1904,7 +1907,7 @@ def test_participant_reference_must_exist():
         participants=[
             Participant(
                 reference_id="missing_reference",
-                role="actor",
+                role="theme",
             )
         ],
     )
@@ -1926,5 +1929,238 @@ def test_participant_requires_exactly_one_target():
         Participant(
             entity_id="entity_laura",
             reference_id="reference_ella",
-            role="actor",
+            role="theme",
+        )
+
+def test_transition_can_be_partially_specified() -> None:
+    transition = Transition(
+        semantic_id="transition_move",
+        participants=[],
+    )
+
+    assert transition.kind == SituationKind.TRANSITION
+    assert transition.transition is None
+    assert transition.semantic_state is None
+
+def test_raw_interpretation_accepts_scope_operator() -> None:
+    raw = RawInterpretation.model_validate(
+        {
+            "situations": [
+                {
+                    "temp_id": "say1",
+                    "kind": "event",
+                    "semantic_type": "say",
+                    "polarity": "negative",
+                    "reality": "actual",
+                    "certainty": "asserted",
+                }
+            ],
+            "scope_operators": [
+                {
+                    "temp_id": "scope1",
+                    "operator": "negation",
+                    "target_id": "say1",
+                }
+            ],
+        }
+    )
+
+    assert len(raw.scope_operators) == 1
+    assert raw.scope_operators[0].operator == "negation"
+    assert raw.scope_operators[0].target_id == "say1"
+
+
+def test_raw_interpretation_rejects_scope_unknown_target() -> None:
+    with pytest.raises(
+        ValueError,
+        match="Raw scope operator references unknown semantic target",
+    ):
+        RawInterpretation.model_validate(
+            {
+                "scope_operators": [
+                    {
+                        "temp_id": "scope1",
+                        "operator": "negation",
+                        "target_id": "missing",
+                    }
+                ],
+            }
+        )
+
+def test_semantic_content_link_can_connect_two_situations() -> None:
+    user = make_user()
+    laura = person("entity_laura", "Laura")
+
+    saying = Event(
+        semantic_id="say_1",
+        semantic_type="say",
+        participants=[
+            Participant(
+                entity_id=user.entity_id,
+                role="agent",
+            )
+        ],
+        polarity=Polarity.NEGATIVE,
+    )
+
+    lying = Event(
+        semantic_id="lie_1",
+        semantic_type="lie",
+        participants=[
+            Participant(
+                entity_id=laura.entity_id,
+                role="agent",
+            )
+        ],
+        reality=RealityStatus.HYPOTHETICAL,
+    )
+
+    interpretation = Interpretation(
+        entities=[user, laura],
+        situations=[saying, lying],
+        semantic_content_links=[
+            SemanticContentLink(
+                source_id="say_1",
+                target_id="lie_1",
+            )
+        ],
+    )
+
+    assert (
+        interpretation.semantic_content_links[0].source_id
+        == "say_1"
+    )
+    assert (
+        interpretation.semantic_content_links[0].target_id
+        == "lie_1"
+    )
+
+
+def test_semantic_content_link_source_must_exist() -> None:
+    lying = Event(
+        semantic_id="lie_1",
+        semantic_type="lie",
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="unknown semantic_id",
+    ):
+        Interpretation(
+            situations=[lying],
+            semantic_content_links=[
+                SemanticContentLink(
+                    source_id="missing_say",
+                    target_id="lie_1",
+                )
+            ],
+        )
+
+
+def test_semantic_content_link_target_must_exist() -> None:
+    saying = Event(
+        semantic_id="say_1",
+        semantic_type="say",
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="unknown semantic_id",
+    ):
+        Interpretation(
+            situations=[saying],
+            semantic_content_links=[
+                SemanticContentLink(
+                    source_id="say_1",
+                    target_id="missing_content",
+                )
+            ],
+        )
+
+def test_raw_interpretation_accepts_semantic_content_link() -> None:
+    raw = RawInterpretation.model_validate(
+        {
+            "situations": [
+                {
+                    "temp_id": "say1",
+                    "kind": "event",
+                    "semantic_type": "say",
+                    "polarity": "negative",
+                    "reality": "actual",
+                    "certainty": "asserted",
+                },
+                {
+                    "temp_id": "lie1",
+                    "kind": "event",
+                    "semantic_type": "lie",
+                    "polarity": "positive",
+                    "reality": "hypothetical",
+                    "certainty": "uncertain",
+                },
+            ],
+            "semantic_content_links": [
+                {
+                    "source_id": "say1",
+                    "target_id": "lie1",
+                }
+            ],
+        }
+    )
+
+    assert len(raw.semantic_content_links) == 1
+    assert raw.semantic_content_links[0].source_id == "say1"
+    assert raw.semantic_content_links[0].target_id == "lie1"
+
+
+def test_raw_semantic_content_link_rejects_unknown_source() -> None:
+    with pytest.raises(
+        ValueError,
+        match="Raw semantic content link references unknown source",
+    ):
+        RawInterpretation.model_validate(
+            {
+                "situations": [
+                    {
+                        "temp_id": "lie1",
+                        "kind": "event",
+                        "semantic_type": "lie",
+                        "polarity": "positive",
+                        "reality": "hypothetical",
+                        "certainty": "uncertain",
+                    }
+                ],
+                "semantic_content_links": [
+                    {
+                        "source_id": "missing_say",
+                        "target_id": "lie1",
+                    }
+                ],
+            }
+        )
+
+
+def test_raw_semantic_content_link_rejects_unknown_target() -> None:
+    with pytest.raises(
+        ValueError,
+        match="Raw semantic content link references unknown target",
+    ):
+        RawInterpretation.model_validate(
+            {
+                "situations": [
+                    {
+                        "temp_id": "say1",
+                        "kind": "event",
+                        "semantic_type": "say",
+                        "polarity": "negative",
+                        "reality": "actual",
+                        "certainty": "asserted",
+                    }
+                ],
+                "semantic_content_links": [
+                    {
+                        "source_id": "say1",
+                        "target_id": "missing_content",
+                    }
+                ],
+            }
         )
