@@ -1,4 +1,4 @@
-import { AdditiveBlending } from "three";
+import { AdditiveBlending, Color } from "three";
 import type { ColorRepresentation } from "three";
 
 interface CrystalInteriorProps {
@@ -12,20 +12,15 @@ export function CrystalInterior({
   energy,
   hotSpot,
 }: CrystalInteriorProps) {
-  const emissiveIntensity =
-    0.25 +
-    energy * 0.45 +
-    hotSpot * 1.1;
+  const hdrColor = new Color(accentColor).multiplyScalar(
+    1.8 + energy * 2.2 + hotSpot * 4.8,
+  );
 
   return (
-    <meshStandardMaterial
-      color="#120704"
-      emissive={accentColor}
-      emissiveIntensity={emissiveIntensity}
-      roughness={0.38}
-      metalness={0.05}
+    <meshBasicMaterial
+      color={hdrColor}
       transparent
-      opacity={0.78}
+      opacity={0.12 + energy * 0.2 + hotSpot * 0.34}
       blending={AdditiveBlending}
       depthWrite={false}
       toneMapped={false}
