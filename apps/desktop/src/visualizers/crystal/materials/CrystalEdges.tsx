@@ -1,13 +1,6 @@
 import { useMemo } from "react";
-import {
-  Color,
-  EdgesGeometry,
-} from "three";
-
-import type {
-  BufferGeometry,
-  ColorRepresentation,
-} from "three";
+import { Color, EdgesGeometry } from "three";
+import type { BufferGeometry, ColorRepresentation } from "three";
 
 interface CrystalEdgesProps {
   geometry: BufferGeometry;
@@ -22,33 +15,27 @@ export function CrystalEdges({
   edgeEnergy,
   hotSpot,
 }: CrystalEdgesProps) {
-  const edges = useMemo(
-    () => new EdgesGeometry(geometry),
-    [geometry],
-  );
+  const edges = useMemo(() => new EdgesGeometry(geometry), [geometry]);
 
   const hdrColor = useMemo(() => {
     const color = new Color(accentColor);
-
-    const energy =
-        0.18 +
-        edgeEnergy * 1.15 +
-        hotSpot * 3.2;
-
-    return color.multiplyScalar(energy);
+    return color.multiplyScalar(
+      0.55 + edgeEnergy * 2.8 + hotSpot * 7.5,
+    );
   }, [accentColor, edgeEnergy, hotSpot]);
 
-    const opacity =
-    0.015 +
-    edgeEnergy * 0.16 +
-    hotSpot * 0.34;
+  const opacity = Math.min(
+    0.025 + edgeEnergy * 0.3 + hotSpot * 0.5,
+    0.95,
+  );
 
   return (
     <lineSegments geometry={edges}>
       <lineBasicMaterial
         color={hdrColor}
         transparent
-        opacity={Math.min(opacity, 0.9)}
+        opacity={opacity}
+        depthWrite={false}
         toneMapped={false}
       />
     </lineSegments>
