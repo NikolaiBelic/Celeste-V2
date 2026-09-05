@@ -9,32 +9,22 @@ interface CrystalEdgesProps {
   hotSpot: number;
 }
 
-export function CrystalEdges({
-  geometry,
-  accentColor,
-  edgeEnergy,
-  hotSpot,
-}: CrystalEdgesProps) {
+export function CrystalEdges({ geometry, accentColor, edgeEnergy, hotSpot }: CrystalEdgesProps) {
   const edges = useMemo(() => new EdgesGeometry(geometry), [geometry]);
+  const active = Math.max(edgeEnergy, hotSpot);
 
   const hdrColor = useMemo(() => {
-    const color = new Color(accentColor);
-    return color.multiplyScalar(
-      0.55 + edgeEnergy * 2.8 + hotSpot * 7.5,
-    );
+    return new Color(accentColor).multiplyScalar(1.8 + edgeEnergy * 4.8 + hotSpot * 8.5);
   }, [accentColor, edgeEnergy, hotSpot]);
 
-  const opacity = Math.min(
-    0.025 + edgeEnergy * 0.3 + hotSpot * 0.5,
-    0.95,
-  );
+  if (active <= 0.035) return null;
 
   return (
     <lineSegments geometry={edges}>
       <lineBasicMaterial
         color={hdrColor}
         transparent
-        opacity={opacity}
+        opacity={Math.min(0.08 + edgeEnergy * 0.5 + hotSpot * 0.42, 0.92)}
         depthWrite={false}
         toneMapped={false}
       />
