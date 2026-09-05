@@ -13,11 +13,16 @@ function seededRandom(seed: number): number {
   return value - Math.floor(value);
 }
 
-export function createIdlePose(piece: CrystalPiece): CrystalIdlePose {
+export function createIdlePose(
+  piece: CrystalPiece,
+): CrystalIdlePose {
   const poseRoll = seededRandom(piece.id + 401);
 
-  // Dense central shell: most plates remain exactly reconstructable.
-  if (poseRoll < 0.72) {
+  /*
+   * 80 %:
+   * cristal completamente reconstruido.
+   */
+  if (poseRoll < 0.8) {
     return {
       position: piece.homePosition.clone(),
       rotation: piece.homeRotation.clone(),
@@ -30,21 +35,65 @@ export function createIdlePose(piece: CrystalPiece): CrystalIdlePose {
   const rotationY = seededRandom(piece.id + 701) - 0.5;
   const rotationZ = seededRandom(piece.id + 809) - 0.5;
 
-  // A few cracked plates hover just outside the shell.
-  if (poseRoll < 0.9) {
-    const distance = 0.035 + distanceRandom * 0.11;
+  /*
+   * 14 %:
+   * pequeñas imperfecciones de la superficie.
+   */
+  if (poseRoll < 0.94) {
+    const distance =
+      0.025 + distanceRandom * 0.075;
+
     return {
-      position: piece.homePosition.clone().add(piece.normal.clone().multiplyScalar(distance)),
-      rotation: piece.homeRotation.clone().add(new Vector3(rotationX * 0.16, rotationY * 0.16, rotationZ * 0.16)),
+      position: piece.homePosition
+        .clone()
+        .add(
+          piece.normal
+            .clone()
+            .multiplyScalar(distance),
+        ),
+
+      rotation: piece.homeRotation
+        .clone()
+        .add(
+          new Vector3(
+            rotationX * 0.1,
+            rotationY * 0.1,
+            rotationZ * 0.1,
+          ),
+        ),
+
       kind: "loose",
     };
   }
 
-  // Sparse hero shards, clearly separated like the reference.
-  const detachedDistance = 0.48 + distanceRandom * 0.72;
+  /*
+   * 6 %:
+   * fragmentos exteriores visibles.
+   *
+   * Siguen siendo piezas REALES del cristal.
+   */
+  const detachedDistance =
+    0.32 + distanceRandom * 0.48;
+
   return {
-    position: piece.homePosition.clone().add(piece.normal.clone().multiplyScalar(detachedDistance)),
-    rotation: piece.homeRotation.clone().add(new Vector3(rotationX * 0.9, rotationY * 0.9, rotationZ * 0.9)),
+    position: piece.homePosition
+      .clone()
+      .add(
+        piece.normal
+          .clone()
+          .multiplyScalar(detachedDistance),
+      ),
+
+    rotation: piece.homeRotation
+      .clone()
+      .add(
+        new Vector3(
+          rotationX * 0.65,
+          rotationY * 0.65,
+          rotationZ * 0.65,
+        ),
+      ),
+
     kind: "detached",
   };
 }

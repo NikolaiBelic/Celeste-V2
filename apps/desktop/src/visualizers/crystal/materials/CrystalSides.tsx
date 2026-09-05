@@ -11,11 +11,11 @@ export function CrystalSides({
 }: CrystalSidesProps) {
   return (
     <meshStandardMaterial
-      color="#030304"
+      color="#080504"
       emissive={accentColor}
-      emissiveIntensity={0.03 + energy * 0.22}
-      roughness={0.3}
-      metalness={0.38}
+      emissiveIntensity={0.015 + energy * 0.045}
+      roughness={0.46}
+      metalness={0.16}
     />
   );
 }

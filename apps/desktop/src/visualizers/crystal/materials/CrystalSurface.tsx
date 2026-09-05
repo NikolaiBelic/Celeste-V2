@@ -1,4 +1,3 @@
-import { Color } from "three";
 import type { ColorRepresentation } from "three";
 
 interface CrystalSurfaceProps {
@@ -7,28 +6,77 @@ interface CrystalSurfaceProps {
   hotSpot: number;
 }
 
-export function CrystalSurface({ surfaceEnergy, hotSpot }: CrystalSurfaceProps) {
+export function CrystalSurface({
+  surfaceEnergy,
+  hotSpot,
+}: CrystalSurfaceProps) {
   /*
-   * Most plates are smoked obsidian. A minority become silver/graphite
-   * reflectors; orange never comes from the exterior face itself.
+   * Intensidad con la que cada fragmento responde
+   * al Environment global de la escena.
+   *
+   * Ya no necesitamos pasar un envMap manualmente:
+   * meshPhysicalMaterial utiliza scene.environment.
    */
-  const silver = Math.max(0, (surfaceEnergy - 0.66) / 0.34);
-  const base = new Color("#050609");
-  const silverColor = new Color("#6f7884");
-  const faceColor = base.clone().lerp(silverColor, silver * 0.72);
+  const environmentIntensity =
+    0.75 +
+    surfaceEnergy * 0.45 +
+    hotSpot * 0.55;
+
+  /*
+   * Variación ligera entre fragmentos.
+   *
+   * Algunas facetas serán más pulidas y otras
+   * dispersarán ligeramente más el reflejo.
+   */
+  const roughness =
+    0.16 +
+    surfaceEnergy * 0.08;
 
   return (
     <meshPhysicalMaterial
-      color={faceColor}
+      /*
+       * Obsidiana casi negra.
+       *
+       * No usamos negro matemático para conservar
+       * información en las zonas poco iluminadas.
+       */
+      color="#111317"
+
+      /*
+       * La superficie exterior NO genera naranja.
+       * La energía pertenece al interior,
+       * las juntas y determinados reflejos.
+       */
       emissive="#000000"
       emissiveIntensity={0}
-      envMapIntensity={0.72 + silver * 1.65 + hotSpot * 0.12}
-      roughness={0.19 - silver * 0.1}
-      metalness={0.18 + silver * 0.28}
-      clearcoat={0.95}
-      clearcoatRoughness={0.06}
-      reflectivity={0.92}
+
+      /*
+       * Environment global proporcionado por
+       * <Environment> + <Lightformer>.
+       */
+      envMapIntensity={environmentIntensity}
+
+      /*
+       * Superficie sólida y reflectante.
+       *
+       * Ya no utilizamos transmission:
+       * queremos obsidiana/cristal negro,
+       * no vidrio transparente.
+       */
+      roughness={roughness}
+      metalness={0.28}
+
+      /*
+       * Capa especular exterior.
+       */
+      clearcoat={0.9}
+      clearcoatRoughness={0.1}
+
       transparent={false}
+
+      /*
+       * Conservamos la lectura facetada.
+       */
       flatShading
     />
   );
