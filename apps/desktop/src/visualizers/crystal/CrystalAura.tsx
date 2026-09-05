@@ -1,74 +1,31 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import {
-  AdditiveBlending,
-  BackSide,
-} from "three";
-
-import type { Group } from "three";
+import { AdditiveBlending } from "three";
 
 interface CrystalAuraProps {
   accentColor: string;
 }
 
-export function CrystalAura({
-  accentColor,
-}: CrystalAuraProps) {
-  const groupRef = useRef<Group>(null);
-
-  useFrame((state) => {
-    const group = groupRef.current;
-
-    if (!group) {
-      return;
-    }
-
-    const time = state.clock.elapsedTime;
-
-    const pulse =
-      1 + Math.sin(time * 0.55) * 0.018;
-
-    group.scale.setScalar(pulse);
-    group.rotation.y += 0.00035;
-  });
-
+export function CrystalAura({ accentColor }: CrystalAuraProps) {
   return (
-    <group ref={groupRef}>
-      <mesh>
-        <icosahedronGeometry args={[1.53, 4]} />
+    <group position={[0, 0.15, -1.9]}>
+      <mesh scale={[2.65, 2.65, 1]}>
+        <circleGeometry args={[1, 96]} />
         <meshBasicMaterial
           color={accentColor}
           transparent
-          opacity={0.018}
+          opacity={0.022}
           blending={AdditiveBlending}
           depthWrite={false}
-          side={BackSide}
           toneMapped={false}
         />
       </mesh>
-
-      <mesh>
-        <icosahedronGeometry args={[1.66, 4]} />
+      <mesh scale={[1.85, 1.85, 1]} position={[0.12, 0.08, 0.05]}>
+        <circleGeometry args={[1, 96]} />
         <meshBasicMaterial
           color={accentColor}
           transparent
-          opacity={0.009}
+          opacity={0.032}
           blending={AdditiveBlending}
           depthWrite={false}
-          side={BackSide}
-          toneMapped={false}
-        />
-      </mesh>
-
-      <mesh>
-        <icosahedronGeometry args={[1.82, 4]} />
-        <meshBasicMaterial
-          color={accentColor}
-          transparent
-          opacity={0.0035}
-          blending={AdditiveBlending}
-          depthWrite={false}
-          side={BackSide}
           toneMapped={false}
         />
       </mesh>
