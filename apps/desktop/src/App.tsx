@@ -1,49 +1,126 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
+import type { CelesteState } from "./visualizers/types";
+import { getVisualizer } from "./visualizers/registry";
+
+type DebugEvent = {
+  id: number;
+  type: "system" | "state";
+  message: string;
+};
+
+const stateLabels: Record<CelesteState, string> = {
+  idle: "IDLE",
+  listening: "LISTENING",
+  thinking: "THINKING",
+  speaking: "SPEAKING",
+};
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const [celesteState] = useState<CelesteState>("idle");
+  const visualizer = getVisualizer("crystal");
+  const ActiveVisualizer = visualizer.component;
+  const [debugOpen, setDebugOpen] = useState(false);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const debugEvents: DebugEvent[] = [
+    {
+      id: 1,
+      type: "system",
+      message: "Celeste Desktop initialized",
+    },
+    {
+      id: 2,
+      type: "state",
+      message: stateLabels[celesteState],
+    },
+  ];
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <main className={`celeste-app ${debugOpen ? "debug-open" : ""}`}>
+      <section className="celeste-stage">
+        <div className="ambient ambient-one" />
+        <div className="ambient ambient-two" />
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+        <div className="celeste-presence">
+          <span className="celeste-name">CELESTE</span>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+          <div className="visualizer-container">
+            <ActiveVisualizer
+              state={celesteState}
+              audioLevel={0}
+              accentColor="#ff7a18"
+            />
+          </div>
+
+          <div className="state-indicator">
+            <span className="state-dot" />
+            <span>{stateLabels[celesteState]}</span>
+          </div>
+        </div>
+
+        <button
+          className="settings-button"
+          type="button"
+          aria-label="Ajustes"
+          title="Ajustes — próximamente"
+        >
+          ⚙
+        </button>
+
+        {!debugOpen && (
+          <button
+            className="debug-trigger"
+            type="button"
+            onClick={() => setDebugOpen(true)}
+          >
+            <span>DEBUG</span>
+            <span className="debug-arrow">‹</span>
+          </button>
+        )}
+      </section>
+
+      <aside className={`debug-panel ${debugOpen ? "open" : ""}`}>
+        <header className="debug-header">
+          <div>
+            <span className="debug-eyebrow">CELESTE</span>
+            <h2>Development</h2>
+          </div>
+
+          <button
+            className="debug-close"
+            type="button"
+            onClick={() => setDebugOpen(false)}
+            aria-label="Cerrar panel"
+          >
+            ×
+          </button>
+        </header>
+
+        <nav className="debug-tabs" aria-label="Debug">
+          <button className="active" type="button">
+            ALL
+          </button>
+          <button type="button">CHAT</button>
+          <button type="button">EVENTS</button>
+          <button type="button">SYSTEM</button>
+        </nav>
+
+        <div className="debug-content">
+          {debugEvents.map((event) => (
+            <article className="debug-event" key={event.id}>
+              <span className={`event-type ${event.type}`}>
+                {event.type}
+              </span>
+              <p>{event.message}</p>
+            </article>
+          ))}
+        </div>
+
+        <footer className="debug-footer">
+          <span className="connection-dot" />
+          <span>LOCAL DEVELOPMENT</span>
+        </footer>
+      </aside>
     </main>
   );
 }
