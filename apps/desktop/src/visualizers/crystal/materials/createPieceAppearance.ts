@@ -9,39 +9,24 @@ function seededRandom(seed: number): number {
   return value - Math.floor(value);
 }
 
-export function createPieceAppearance(
-  pieceId: number,
-): CrystalPieceAppearance {
+export function createPieceAppearance(pieceId: number): CrystalPieceAppearance {
   const surfaceVariation = seededRandom(pieceId + 31);
   const edgeVariation = seededRandom(pieceId + 79);
   const hotSpotRoll = seededRandom(pieceId + 137);
   const hotSpotStrength = seededRandom(pieceId + 211);
 
-  /*
-   * La mayoría de las caras permanecen muy oscuras.
-   * Algunas reciben algo más de energía.
-   */
-  const surfaceEnergy =
-    Math.pow(surfaceVariation, 2.2);
+  // Broad contrast: most black, a useful minority silver/graphite.
+  const surfaceEnergy = Math.pow(surfaceVariation, 1.45);
 
-  /*
-   * Las aristas tienen una distribución más contrastada:
-   * muchas discretas, algunas claramente energizadas.
-   */
-  const edgeEnergy =
-    Math.pow(edgeVariation, 1.65);
+  // Most edges are dead. Only the upper tail becomes visibly energized.
+  const edgeEnergy = edgeVariation > 0.68
+    ? Math.pow((edgeVariation - 0.68) / 0.32, 0.8)
+    : 0;
 
-  /*
-   * Solo una minoría de piezas son "hot spots".
-   */
-  const hotSpot =
-    hotSpotRoll > 0.86
-      ? 0.55 + hotSpotStrength * 0.45
-      : 0;
+  // Very sparse incandescent plates/cracks.
+  const hotSpot = hotSpotRoll > 0.91
+    ? 0.68 + hotSpotStrength * 0.32
+    : 0;
 
-  return {
-    surfaceEnergy,
-    edgeEnergy,
-    hotSpot,
-  };
+  return { surfaceEnergy, edgeEnergy, hotSpot };
 }
