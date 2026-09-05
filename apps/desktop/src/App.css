@@ -86,20 +86,22 @@ button {
 
 .celeste-presence {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translate(-50%, -50%);
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .celeste-name {
-  margin-bottom: 3.4rem;
+  position: absolute;
+  top: calc(50% - 17rem);
+  left: 50%;
+  transform: translateX(-50%);
+
   color: rgba(255, 255, 255, 0.62);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.48rem;
+  white-space: nowrap;
 }
 
 .visual-placeholder {
@@ -156,14 +158,20 @@ button {
 }
 
 .state-indicator {
-  margin-top: 3.2rem;
+  position: absolute;
+  top: calc(50% + 16rem);
+  left: 50%;
+  transform: translateX(-50%);
+
   display: flex;
   align-items: center;
   gap: 0.65rem;
+
   color: rgba(255, 255, 255, 0.35);
   font-size: 0.64rem;
   font-weight: 600;
   letter-spacing: 0.2rem;
+  white-space: nowrap;
 }
 
 .state-dot {
@@ -190,6 +198,7 @@ button {
     color 180ms ease,
     border-color 180ms ease,
     background 180ms ease;
+  z-index: 3;
 }
 
 .settings-button:hover {
@@ -219,6 +228,7 @@ button {
   transition:
     color 180ms ease,
     background 180ms ease;
+  z-index: 3;
 }
 
 .debug-trigger:hover {
@@ -422,9 +432,11 @@ button {
 }
 
 .visualizer-container {
-  position: relative;
-  width: 22rem;
-  height: 22rem;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .crystal-visualizer {

@@ -8,6 +8,8 @@ export interface CrystalPiece {
   homePosition: Vector3;
   homeRotation: Vector3;
 
+  normal: Vector3;
+
   explodeDirection: Vector3;
   explodeDistance: number;
 

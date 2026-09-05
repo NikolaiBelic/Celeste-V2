@@ -1,9 +1,9 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
 
-import { CrystalPiece } from "./CrystalPiece";
 import { createCrystal } from "./geometry/createCrystal";
+import { CrystalPiece } from "./CrystalPiece";
 
 interface CrystalBodyProps {
   accentColor: string;
@@ -14,24 +14,39 @@ export function CrystalBody({
 }: CrystalBodyProps) {
   const groupRef = useRef<Group>(null);
 
-  const pieces = useMemo(() => createCrystal(), []);
+  const pieces = useMemo(
+    () => createCrystal(),
+    [],
+  );
 
-  useFrame((state, delta) => {
-    const group = groupRef.current;
+  useEffect(() => {
+    return () => {
+      pieces.forEach((piece) => {
+        piece.geometry.dispose();
+      });
+    };
+  }, [pieces]);
 
-    if (!group) {
+  useFrame((state) => {
+    if (!groupRef.current) {
       return;
     }
 
-    group.rotation.y += delta * 0.08;
-    group.rotation.x += delta * 0.018;
-
     const time = state.clock.elapsedTime;
 
-    const breathing =
-      1 + Math.sin(time * 0.75) * 0.018;
+    /*
+     * Movimiento lento y pesado.
+     * Celeste debe sentirse suspendida,
+     * no como una esfera decorativa girando.
+     */
+    groupRef.current.rotation.y =
+      time * 0.055;
 
-    group.scale.setScalar(breathing);
+    groupRef.current.rotation.x =
+      Math.sin(time * 0.13) * 0.035;
+
+    groupRef.current.rotation.z =
+      Math.sin(time * 0.09) * 0.018;
   });
 
   return (

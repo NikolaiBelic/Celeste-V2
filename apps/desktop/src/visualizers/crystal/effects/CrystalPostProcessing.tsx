@@ -2,7 +2,7 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
 
 export function CrystalPostProcessing() {
   return (
-    <EffectComposer multisampling={4}>
+    <EffectComposer multisampling={0}>
       <Bloom
         intensity={1.35}
         luminanceThreshold={0.85}

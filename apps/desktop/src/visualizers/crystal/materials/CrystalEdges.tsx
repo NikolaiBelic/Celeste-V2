@@ -12,13 +12,15 @@ import type {
 interface CrystalEdgesProps {
   geometry: BufferGeometry;
   accentColor: ColorRepresentation;
-  brightness: number;
+  edgeEnergy: number;
+  hotSpot: number;
 }
 
 export function CrystalEdges({
   geometry,
   accentColor,
-  brightness,
+  edgeEnergy,
+  hotSpot,
 }: CrystalEdgesProps) {
   const edges = useMemo(
     () => new EdgesGeometry(geometry),
@@ -28,22 +30,25 @@ export function CrystalEdges({
   const hdrColor = useMemo(() => {
     const color = new Color(accentColor);
 
-    /*
-     * Three.js permite componentes RGB > 1.
-     * Es precisamente lo que necesitamos para que determinadas
-     * aristas entren en el rango HDR y produzcan bloom.
-     */
-    const energy = 1.2 + brightness * 2.8;
+    const energy =
+        0.18 +
+        edgeEnergy * 1.15 +
+        hotSpot * 3.2;
 
     return color.multiplyScalar(energy);
-  }, [accentColor, brightness]);
+  }, [accentColor, edgeEnergy, hotSpot]);
+
+    const opacity =
+    0.015 +
+    edgeEnergy * 0.16 +
+    hotSpot * 0.34;
 
   return (
     <lineSegments geometry={edges}>
       <lineBasicMaterial
         color={hdrColor}
         transparent
-        opacity={0.18 + brightness * 0.55}
+        opacity={Math.min(opacity, 0.9)}
         toneMapped={false}
       />
     </lineSegments>

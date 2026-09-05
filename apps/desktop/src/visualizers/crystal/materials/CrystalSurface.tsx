@@ -2,33 +2,82 @@ import type { ColorRepresentation } from "three";
 
 interface CrystalSurfaceProps {
   accentColor: ColorRepresentation;
-  brightness: number;
+  surfaceEnergy: number;
+  hotSpot: number;
 }
 
 export function CrystalSurface({
-  accentColor,
-  brightness,
+  surfaceEnergy,
+  hotSpot,
 }: CrystalSurfaceProps) {
+  /*
+   * Intensidad con la que cada fragmento responde
+   * al Environment global de la escena.
+   *
+   * Ya no necesitamos pasar un envMap manualmente:
+   * meshPhysicalMaterial utiliza scene.environment.
+   */
+  const environmentIntensity =
+    0.75 +
+    surfaceEnergy * 0.45 +
+    hotSpot * 0.55;
+
+  /*
+   * Variación ligera entre fragmentos.
+   *
+   * Algunas facetas serán más pulidas y otras
+   * dispersarán ligeramente más el reflejo.
+   */
+  const roughness =
+    0.16 +
+    surfaceEnergy * 0.08;
+
   return (
     <meshPhysicalMaterial
-        color="#070605"
-        emissive={accentColor}
-        emissiveIntensity={0.015 + brightness * 0.07}
+      /*
+       * Obsidiana casi negra.
+       *
+       * No usamos negro matemático para conservar
+       * información en las zonas poco iluminadas.
+       */
+      color="#111317"
 
-        roughness={0.2}
-        metalness={0.15}
+      /*
+       * La superficie exterior NO genera naranja.
+       * La energía pertenece al interior,
+       * las juntas y determinados reflejos.
+       */
+      emissive="#000000"
+      emissiveIntensity={0}
 
-        transparent
-        opacity={0.78}
+      /*
+       * Environment global proporcionado por
+       * <Environment> + <Lightformer>.
+       */
+      envMapIntensity={environmentIntensity}
 
-        transmission={0.16}
-        thickness={0.35}
-        ior={1.7}
+      /*
+       * Superficie sólida y reflectante.
+       *
+       * Ya no utilizamos transmission:
+       * queremos obsidiana/cristal negro,
+       * no vidrio transparente.
+       */
+      roughness={roughness}
+      metalness={0.28}
 
-        clearcoat={0.55}
-        clearcoatRoughness={0.22}
+      /*
+       * Capa especular exterior.
+       */
+      clearcoat={0.9}
+      clearcoatRoughness={0.1}
 
-        flatShading
-        />
+      transparent={false}
+
+      /*
+       * Conservamos la lectura facetada.
+       */
+      flatShading
+    />
   );
 }

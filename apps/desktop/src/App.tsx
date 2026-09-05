@@ -18,9 +18,10 @@ const stateLabels: Record<CelesteState, string> = {
 
 function App() {
   const [celesteState] = useState<CelesteState>("idle");
+  const [debugOpen, setDebugOpen] = useState(false);
+
   const visualizer = getVisualizer("crystal");
   const ActiveVisualizer = visualizer.component;
-  const [debugOpen, setDebugOpen] = useState(false);
 
   const debugEvents: DebugEvent[] = [
     {
@@ -41,16 +42,18 @@ function App() {
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
 
+        {/* Capa 3D: ocupa todo el stage */}
+        <div className="visualizer-container">
+          <ActiveVisualizer
+            state={celesteState}
+            audioLevel={0}
+            accentColor="#ff7a18"
+          />
+        </div>
+
+        {/* Interfaz superpuesta al mundo 3D */}
         <div className="celeste-presence">
           <span className="celeste-name">CELESTE</span>
-
-          <div className="visualizer-container">
-            <ActiveVisualizer
-              state={celesteState}
-              audioLevel={0}
-              accentColor="#ff7a18"
-            />
-          </div>
 
           <div className="state-indicator">
             <span className="state-dot" />

@@ -1,13 +1,18 @@
 import { Canvas } from "@react-three/fiber";
+
+import { CrystalAura } from "./CrystalAura";
 import { CrystalBody } from "./CrystalBody";
 import { CrystalInnerCore } from "./CrystalInnerCore";
-import { CrystalPostProcessing } from "./effects/CrystalPostProcessing";
+import { CrystalEnvironment } from "./lighting/CrystalEnvironment";
+import { CrystalLighting } from "./lighting/CrystalLighting";
 
 interface CrystalSceneProps {
   accentColor: string;
 }
 
-export function CrystalScene({ accentColor }: CrystalSceneProps) {
+export function CrystalScene({
+  accentColor,
+}: CrystalSceneProps) {
   return (
     <Canvas
       camera={{
@@ -20,25 +25,16 @@ export function CrystalScene({ accentColor }: CrystalSceneProps) {
         alpha: true,
       }}
     >
-      <ambientLight intensity={0.5} />
+      <CrystalEnvironment accentColor={accentColor} />
 
-      <pointLight
-        position={[3, 2, 4]}
-        color={accentColor}
-        intensity={45}
-        distance={10}
-        />
+      <CrystalLighting accentColor={accentColor} />
 
-    <pointLight
-    position={[-3, -2, 2]}
-    color={accentColor}
-    intensity={22}
-    distance={8}
-    />
-      <CrystalInnerCore accentColor={accentColor} />
+      <CrystalAura accentColor={accentColor} />
+
+      <group scale={0.48}>
+        <CrystalInnerCore accentColor={accentColor} />
         <CrystalBody accentColor={accentColor} />
-
-        <CrystalPostProcessing />
+      </group>
     </Canvas>
   );
 }

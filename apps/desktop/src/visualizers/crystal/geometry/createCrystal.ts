@@ -1,10 +1,8 @@
 import {
-  BufferGeometry,
-  Float32BufferAttribute,
   IcosahedronGeometry,
   Vector3,
 } from "three";
-
+import { createCrystalPieceGeometry } from "./createCrystalPieceGeometry";
 import type { CrystalPiece } from "./types";
 
 function seededRandom(seed: number): number {
@@ -54,23 +52,32 @@ export function createCrystal(): CrystalPiece[] {
     b.sub(center);
     c.sub(center);
 
-    const geometry = new BufferGeometry();
+    const edgeAB = new Vector3().subVectors(b, a);
+    const edgeAC = new Vector3().subVectors(c, a);
 
-    geometry.setAttribute(
-      "position",
-      new Float32BufferAttribute(
-        [
-          a.x, a.y, a.z,
-          b.x, b.y, b.z,
-          c.x, c.y, c.z,
-        ],
-        3,
-      ),
-    );
+    const normal = new Vector3()
+      .crossVectors(edgeAB, edgeAC)
+      .normalize();
 
-    geometry.computeVertexNormals();
+    /*
+    * Garantizamos que la normal siempre apunta hacia fuera.
+    */
+    if (normal.dot(center) < 0) {
+      normal.negate();
+    }
 
     const id = i / 3;
+
+    const thickness =
+      0.035 + seededRandom(id + 900) * 0.035;
+
+    const geometry = createCrystalPieceGeometry({
+      a,
+      b,
+      c,
+      normal,
+      thickness,
+    });
 
     const explodeDirection = center.clone().normalize();
 
@@ -87,6 +94,8 @@ export function createCrystal(): CrystalPiece[] {
       homePosition: center,
 
       homeRotation: new Vector3(0, 0, 0),
+
+      normal,
 
       explodeDirection,
       explodeDistance,
